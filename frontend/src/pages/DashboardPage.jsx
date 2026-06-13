@@ -15,7 +15,7 @@ export default function DashboardPage() {
     activeBriefingId, setActiveBriefingId,
     companyName, setCompanyName,
     briefingText, setBriefingText,
-    fetchBriefingsHistory
+    briefingsHistory, fetchBriefingsHistory
   } = useAuth();
   
   const navigate = useNavigate();
@@ -358,6 +358,72 @@ export default function DashboardPage() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Placeholder dashboard content when no active scan is open */}
+      {!hasSearched && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 text-left">
+          {/* Quick Scans / Popular Targets */}
+          <div className="md:col-span-2 bg-background rounded-lg border border-border p-5 shadow-sm space-y-4">
+            <div>
+              <h4 className="text-[12px] font-semibold text-foreground flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-accent" />
+                <span>Suggested Research Targets</span>
+              </h4>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Click any popular tech firm to launch a sequential multi-agent scan instantly.</p>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[
+                { name: 'Stripe', industry: 'Fintech / Payments' },
+                { name: 'Figma', industry: 'Design Tools' },
+                { name: 'Notion', industry: 'Collaborative Workspace' },
+                { name: 'Supabase', industry: 'Database / Backend' },
+                { name: 'Vercel', industry: 'Frontend Deployment' },
+                { name: 'OpenAI', industry: 'AI Foundation Models' }
+              ].map((company, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleResearchSubmit(company.name)}
+                  className="flex flex-col items-start p-3 bg-secondary/35 border border-border/80 hover:border-slate-350 hover:bg-secondary/60 rounded-xl transition-all cursor-pointer text-left w-full"
+                >
+                  <span className="text-[11.5px] font-bold text-foreground">{company.name}</span>
+                  <span className="text-[9.5px] text-muted-foreground mt-0.5">{company.industry}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Stats Summary */}
+          <div className="bg-background rounded-lg border border-border p-5 shadow-sm space-y-4 flex flex-col justify-between">
+            <div>
+              <h4 className="text-[12px] font-semibold text-foreground">Workspace Metrics</h4>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Overview of scan logs and resource allocations.</p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center text-[11px] py-1 border-b border-border/40">
+                <span className="text-muted-foreground">Scanned Companies</span>
+                <span className="font-semibold text-foreground">{(briefingsHistory || []).length}</span>
+              </div>
+              <div className="flex justify-between items-center text-[11px] py-1 border-b border-border/40">
+                <span className="text-muted-foreground">Competitors Profiled</span>
+                <span className="font-semibold text-foreground">{(briefingsHistory || []).length * 3}</span>
+              </div>
+              <div className="flex justify-between items-center text-[11px] py-1">
+                <span className="text-muted-foreground">Active Billing Tier</span>
+                <span className="font-semibold text-accent capitalize">{user.tier}</span>
+              </div>
+            </div>
+
+            <div className="text-[9px] bg-secondary/50 border border-border/60 p-2 rounded text-muted-foreground leading-normal">
+              {user.tier === 'pro' 
+                ? 'Professional plan activated. Priority agent streams and unrestricted PDF/Competitor matrices are ready.'
+                : 'Upgrade to Professional in settings to unlock unlimited research limits, deep competitor tables, and PDF reports.'
+              }
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
