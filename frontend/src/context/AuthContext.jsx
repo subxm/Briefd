@@ -9,6 +9,13 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Global Research & History States
+  const [activeBriefingId, setActiveBriefingId] = useState(null);
+  const [companyName, setCompanyName] = useState('');
+  const [briefingText, setBriefingText] = useState('');
+  const [briefingsHistory, setBriefingsHistory] = useState([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+
   // Function to refresh the profile info from public.profiles
   const refreshUser = async (currentSession = null) => {
     const activeSession = currentSession || (await supabase.auth.getSession()).data.session;
@@ -165,6 +172,64 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const fetchBriefingsHistory = async (justCompletedCompany = null) => {
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/briefings`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBriefingsHistory(data);
+        if (justCompletedCompany && data.length > 0) {
+          const match = data.find(b => b.company_name.toLowerCase() === justCompletedCompany.toLowerCase());
+          if (match) {
+            setActiveBriefingId(match.id);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch briefings history:", err);
+    }
+  };
+
+  const loadHistoricalBriefing = async (id) => {
+    if (!token || !id) return;
+    setIsHistoryLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/briefings/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error("Failed to load historical briefing.");
+      }
+      const data = await response.json();
+      setCompanyName(data.company_name);
+      setBriefingText(data.briefing_text);
+      setActiveBriefingId(id);
+    } catch (err) {
+      console.error("Failed to load briefing:", err);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  };
+
+  // Automatically fetch history on login, clear on logout
+  useEffect(() => {
+    if (token) {
+      fetchBriefingsHistory();
+    } else {
+      setBriefingsHistory([]);
+      setActiveBriefingId(null);
+      setCompanyName('');
+      setBriefingText('');
+    }
+  }, [token]);
+
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -172,7 +237,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, loginWithGoogle, logout, loading, refreshUser, upgradeToPro }}>
+    <AuthContext.Provider value={{ 
+      user, token, login, register, loginWithGoogle, logout, loading, refreshUser, upgradeToPro,
+      activeBriefingId, setActiveBriefingId,
+      companyName, setCompanyName,
+      briefingText, setBriefingText,
+      briefingsHistory, setBriefingsHistory,
+      isHistoryLoading, fetchBriefingsHistory, loadHistoricalBriefing
+    }}>
       {children}
     </AuthContext.Provider>
   );
