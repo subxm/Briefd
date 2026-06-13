@@ -246,8 +246,9 @@ export default function DashboardPage() {
 
         {/* Active Workings Panel */}
         <AnimatePresence mode="wait">
-          {hasSearched && (
+          {hasSearched ? (
             <motion.div 
+              key="active-search"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -295,6 +296,63 @@ export default function DashboardPage() {
                 {(briefingText || completedAgents.length > 0) && (
                   <Briefing briefingText={briefingText} />
                 )}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="pipeline-placeholder"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="border-t border-border/60 pt-5 text-left text-[11px]"
+            >
+              <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+                Research Pipeline Loop
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 relative">
+                {[
+                  {
+                    step: '01',
+                    name: 'Company Researcher',
+                    desc: 'Scans search indices, archives news, and builds target profiles.'
+                  },
+                  {
+                    step: '02',
+                    name: 'Competitor Finder',
+                    desc: 'Identifies alternatives, extracts rivals, and maps threat cards.'
+                  },
+                  {
+                    step: '03',
+                    name: 'Positioning Analyst',
+                    desc: 'Maps feature capability grids and counts differentiator levels.'
+                  },
+                  {
+                    step: '04',
+                    name: 'Briefing Writer',
+                    desc: 'Synthesizes all structured agent data into final markdown briefs.'
+                  }
+                ].map((agent, index) => (
+                  <div key={index} className="relative bg-secondary/35 border border-border/60 rounded-xl p-4 flex flex-col justify-between hover:border-slate-300 transition-all min-h-[110px]">
+                    {/* Connecting Chevron/Arrow for desktop */}
+                    {index < 3 && (
+                      <div className="hidden sm:block absolute top-1/2 -right-3 -translate-y-1/2 z-10 bg-background border border-border rounded-full p-1 text-muted-foreground">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9.5px] font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full border border-accent/10">
+                          Step {agent.step}
+                        </span>
+                      </div>
+                      <h5 className="text-[11.5px] font-bold text-foreground leading-tight">{agent.name}</h5>
+                      <p className="mt-1.5 text-[10.5px] text-muted-foreground/85 leading-relaxed">{agent.desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </motion.div>
           )}
