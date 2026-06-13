@@ -5,7 +5,7 @@ import {
   Search, Bell, ChevronDown, Home, CheckSquare, 
   ArrowLeftRight, CreditCard, Landmark, LineChart, 
   Settings, HelpCircle, Activity, Sparkles, AlertCircle, LogOut,
-  FileText, Users
+  FileText, Users, Check, X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
@@ -44,6 +44,11 @@ export default function DashboardPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [limitModalMode, setLimitModalMode] = useState('limit'); // 'limit' or 'export'
 
+  // Competitor Dashboard & Multi-View Navigation States
+  const [activeView, setActiveView] = useState('home');
+  const [competitorData, setCompetitorData] = useState(null);
+  const [isCompetitorsLoading, setIsCompetitorsLoading] = useState(false);
+
   const resetDashboard = () => {
     setHasSearched(false);
     setCompanyName('');
@@ -52,7 +57,38 @@ export default function DashboardPage() {
     setActiveAgent(null);
     setErrorMsg(null);
     setActiveBriefingId(null);
+    setActiveView('home');
+    setCompetitorData(null);
   };
+
+  const loadCompetitors = async (briefingId) => {
+    if (!token || !briefingId) return;
+    setIsCompetitorsLoading(true);
+    setCompetitorData(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/briefings/${briefingId}/competitors`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCompetitorData(data);
+      } else {
+        console.error("Failed to load competitor data:", response.statusText);
+      }
+    } catch (err) {
+      console.error("Error fetching competitor data:", err);
+    } finally {
+      setIsCompetitorsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeView === 'competitors' && activeBriefingId) {
+      loadCompetitors(activeBriefingId);
+    }
+  }, [activeView, activeBriefingId]);
 
   const fetchBriefingsHistory = async (justCompletedCompany = null) => {
     if (!token) return;
@@ -358,22 +394,47 @@ export default function DashboardPage() {
           <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-1">
             <div className="space-y-1">
               <button 
-                onClick={resetDashboard}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded bg-secondary text-foreground font-medium transition-colors cursor-pointer"
+                onClick={() => setActiveView('home')}
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded transition-all cursor-pointer ${
+                  activeView === 'home' 
+                    ? 'bg-secondary text-foreground font-semibold' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                }`}
               >
-                <Home className="h-3.5 w-3.5 text-accent" />
+                <Home className={`h-3.5 w-3.5 ${activeView === 'home' ? 'text-accent' : ''}`} />
                 <span>Home</span>
               </button>
-              <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                <Users className="h-3.5 w-3.5" />
+              <button 
+                onClick={() => setActiveView('competitors')}
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded transition-all cursor-pointer ${
+                  activeView === 'competitors' 
+                    ? 'bg-secondary text-foreground font-semibold' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                }`}
+              >
+                <Users className={`h-3.5 w-3.5 ${activeView === 'competitors' ? 'text-accent' : ''}`} />
                 <span>Competitors</span>
               </button>
-              <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                <LineChart className="h-3.5 w-3.5" />
+              <button 
+                onClick={() => setActiveView('market-trends')}
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded transition-all cursor-pointer ${
+                  activeView === 'market-trends' 
+                    ? 'bg-secondary text-foreground font-semibold' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                }`}
+              >
+                <LineChart className={`h-3.5 w-3.5 ${activeView === 'market-trends' ? 'text-accent' : ''}`} />
                 <span>Market Trends</span>
               </button>
-              <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                <Activity className="h-3.5 w-3.5" />
+              <button 
+                onClick={() => setActiveView('api-status')}
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded transition-all cursor-pointer ${
+                  activeView === 'api-status' 
+                    ? 'bg-secondary text-foreground font-semibold' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                }`}
+              >
+                <Activity className={`h-3.5 w-3.5 ${activeView === 'api-status' ? 'text-accent' : ''}`} />
                 <span>API Status</span>
               </button>
             </div>
@@ -490,83 +551,290 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Research Panel Container */}
-          <div className="bg-background rounded-lg border border-border p-4 md:p-5 flex flex-col gap-6 shadow-sm">
-            
-            {/* Tool Header */}
-            <div className="flex items-start justify-between border-b border-border/60 pb-3 text-left">
-              <div>
-                <h3 className="text-[13px] font-semibold text-foreground flex items-center gap-1.5">
-                  <Sparkles className="h-4 w-4 text-accent" />
-                  <span>Competitive Research Multi-Agent Toolkit</span>
-                </h3>
+          {/* Home View Panel */}
+          {activeView === 'home' && (
+            <div className="bg-background rounded-lg border border-border p-4 md:p-5 flex flex-col gap-6 shadow-sm">
+              
+              {/* Tool Header */}
+              <div className="flex items-start justify-between border-b border-border/60 pb-3 text-left">
+                <div>
+                  <h3 className="text-[13px] font-semibold text-foreground flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-accent" />
+                    <span>Competitive Research Multi-Agent Toolkit</span>
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Run 4 agents sequentially to synthesize intelligence on your target company.
+                  </p>
+                </div>
+              </div>
+
+              {/* Search Input */}
+              <div className="w-full">
+                <SearchBar onSubmit={handleResearchSubmit} isLoading={isLoading} />
+              </div>
+
+              {/* Active Workings Panel */}
+              <AnimatePresence mode="wait">
+                {hasSearched && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="flex flex-col md:flex-row gap-6 border-t border-border/60 pt-5 text-left text-[11px]"
+                  >
+                    {/* Progress Timeline on the left */}
+                    <div className="w-full md:w-60 shrink-0">
+                      <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-4">
+                        Agent Orchestration
+                      </h4>
+                      <AgentProgress activeAgent={activeAgent} completedAgents={completedAgents} />
+                    </div>
+
+                    {/* Briefing Results on the right */}
+                    <div className="flex-1 min-w-0 border-t md:border-t-0 md:border-l border-border/60 pt-5 md:pt-0 md:pl-6">
+                      <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-4">
+                        Briefing Outputs
+                      </h4>
+                      
+                      {/* Error messaging */}
+                      {errorMsg && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2 text-red-700 text-[12px] font-body">
+                          <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
+                          <div>
+                            <p className="font-medium">Analysis Failed</p>
+                            <p className="mt-0.5 opacity-90">{errorMsg}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Loading state message if briefing hasn't started */}
+                      {isLoading && !briefingText && !errorMsg && (
+                        <div className="flex flex-col items-center justify-center py-12 text-center select-none text-muted-foreground">
+                          <div className="h-6 w-6 rounded-full border border-border flex items-center justify-center animate-pulse">
+                            <Sparkles className="h-3.5 w-3.5 text-accent animate-spin" />
+                          </div>
+                          <p className="mt-3 text-[12px] font-medium text-foreground">Gathering information from search indices...</p>
+                          <p className="mt-1 text-[10px] text-muted-foreground/60 max-w-xs">
+                            Our agents are currently scanning the web. This can take up to 30-45 seconds.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Stream/Display the briefing report */}
+                      {(briefingText || completedAgents.length > 0) && (
+                        <Briefing briefingText={briefingText} />
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* Competitors View Panel */}
+          {activeView === 'competitors' && (
+            <div className="flex flex-col gap-6 text-left">
+              {/* Header */}
+              <div className="bg-background rounded-lg border border-border p-4 md:p-5 shadow-sm">
+                <h2 className="text-sm font-semibold text-foreground tracking-tight flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-accent" />
+                  <span>Competitor Intelligence Matrix</span>
+                </h2>
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  Run 4 agents sequentially to synthesize intelligence on your target company.
+                  Side-by-side analysis, strengths, weaknesses, and relative feature capabilities.
                 </p>
               </div>
-            </div>
 
-            {/* Search Input */}
-            <div className="w-full">
-              <SearchBar onSubmit={handleResearchSubmit} isLoading={isLoading} />
-            </div>
-
-            {/* Active Workings Panel */}
-            <AnimatePresence mode="wait">
-              {hasSearched && (
-                <motion.div 
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="flex flex-col md:flex-row gap-6 border-t border-border/60 pt-5 text-left text-[11px]"
-                >
-                  {/* Progress Timeline on the left */}
-                  <div className="w-full md:w-60 shrink-0">
-                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-4">
-                      Agent Orchestration
-                    </h4>
-                    <AgentProgress activeAgent={activeAgent} completedAgents={completedAgents} />
+              {!activeBriefingId ? (
+                /* No Active Briefing State */
+                <div className="bg-background rounded-lg border border-border p-8 text-center shadow-sm flex flex-col items-center justify-center min-h-[300px]">
+                  <div className="h-12 w-12 bg-secondary border border-border rounded-full flex items-center justify-center text-muted-foreground/60 mb-4 animate-pulse">
+                    <Search className="h-5 w-5" />
                   </div>
+                  <h3 className="text-xs font-semibold text-foreground">No Research Session Active</h3>
+                  <p className="text-[10px] text-muted-foreground mt-2 max-w-xs leading-relaxed font-body">
+                    Select an intelligence briefing from your sidebar history, or start a new scan on the Home page to populate the competitor matrix.
+                  </p>
+                  <button 
+                    onClick={() => setActiveView('home')}
+                    className="mt-4 rounded-full bg-primary text-primary-foreground hover:bg-primary/95 px-4 py-1.5 text-[10px] font-medium transition-colors cursor-pointer"
+                  >
+                    Go to Home
+                  </button>
+                </div>
+              ) : isCompetitorsLoading ? (
+                /* Loading State */
+                <div className="bg-background rounded-lg border border-border p-12 text-center shadow-sm flex flex-col items-center justify-center min-h-[300px]">
+                  <div className="h-10 w-10 border-2 border-accent border-t-transparent rounded-full animate-spin mb-4" />
+                  <p className="text-[12px] font-medium text-foreground">Analyzing Competitor Intelligence...</p>
+                  <p className="text-[10px] text-muted-foreground mt-1 font-body">
+                    Extracting side-by-side comparison data and feature matrix. This takes about 2-3 seconds.
+                  </p>
+                </div>
+              ) : !competitorData ? (
+                /* Empty / Fail state */
+                <div className="bg-background rounded-lg border border-border p-8 text-center shadow-sm flex flex-col items-center justify-center min-h-[300px]">
+                  <p className="text-[11px] text-muted-foreground italic font-body">Failed to parse competitor data from the briefing text.</p>
+                </div>
+              ) : (
+                /* Loaded State */
+                <div className="space-y-6 animate-in fade-in duration-300">
+                  {/* Grid of Competitor Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {competitorData.competitors.map((comp, idx) => (
+                      <div key={idx} className="bg-background rounded-lg border border-border p-4 shadow-sm flex flex-col justify-between hover:border-accent/35 transition-colors duration-250">
+                        <div className="space-y-3">
+                          {/* Name & Score */}
+                          <div className="flex items-start justify-between border-b border-border/50 pb-2">
+                            <h4 className="font-semibold text-foreground text-[12px] uppercase">{comp.name}</h4>
+                            <span className="px-1.5 py-0.5 rounded bg-accent/15 text-accent border border-accent/20 text-[9px] font-semibold">
+                              Threat: {comp.strength_score}/10
+                            </span>
+                          </div>
 
-                  {/* Briefing Results on the right */}
-                  <div className="flex-1 min-w-0 border-t md:border-t-0 md:border-l border-border/60 pt-5 md:pt-0 md:pl-6">
-                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-4">
-                      Briefing Outputs
-                    </h4>
-                    
-                    {/* Error messaging */}
-                    {errorMsg && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2 text-red-700 text-[12px] font-body">
-                        <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
-                        <div>
-                          <p className="font-medium">Analysis Failed</p>
-                          <p className="mt-0.5 opacity-90">{errorMsg}</p>
+                          {/* Differentiator / Scale */}
+                          <div className="text-[10px] space-y-1 font-body">
+                            <p className="text-muted-foreground"><span className="font-medium text-foreground">Differentiator:</span> {comp.differentiator}</p>
+                            <p className="text-muted-foreground"><span className="font-medium text-foreground">Scale:</span> {comp.scale}  |  <span className="font-medium text-foreground">Model:</span> {comp.pricing_model}</p>
+                          </div>
+
+                          {/* Rating Meter */}
+                          <div className="space-y-1">
+                            <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                              <div className="bg-accent h-full rounded-full" style={{ width: `${comp.strength_score * 10}%` }} />
+                            </div>
+                          </div>
+
+                          {/* Strengths & Weaknesses */}
+                          <div className="grid grid-cols-2 gap-3 pt-1.5 text-[9.5px]">
+                            <div className="space-y-1.5 text-left font-body">
+                              <p className="font-semibold text-emerald-600">Strengths</p>
+                              <ul className="list-disc ml-3.5 space-y-0.5 text-muted-foreground/90">
+                                {comp.strengths.map((str, sIdx) => (
+                                  <li key={sIdx}>{str}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="space-y-1.5 text-left font-body">
+                              <p className="font-semibold text-red-500">Weaknesses</p>
+                              <ul className="list-disc ml-3.5 space-y-0.5 text-muted-foreground/90">
+                                {comp.weaknesses.map((weak, wIdx) => (
+                                  <li key={wIdx}>{weak}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    )}
-
-                    {/* Loading state message if briefing hasn't started */}
-                    {isLoading && !briefingText && !errorMsg && (
-                      <div className="flex flex-col items-center justify-center py-12 text-center select-none text-muted-foreground">
-                        <div className="h-6 w-6 rounded-full border border-border flex items-center justify-center animate-pulse">
-                          <Sparkles className="h-3.5 w-3.5 text-accent animate-spin" />
-                        </div>
-                        <p className="mt-3 text-[12px] font-medium text-foreground">Gathering information from search indices...</p>
-                        <p className="mt-1 text-[10px] text-muted-foreground/60 max-w-xs">
-                          Our agents are currently scanning the web. This can take up to 30-45 seconds.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Stream/Display the briefing report */}
-                    {(briefingText || completedAgents.length > 0) && (
-                      <Briefing briefingText={briefingText} />
-                    )}
+                    ))}
                   </div>
-                </motion.div>
+
+                  {/* Side-by-Side Comparison Matrix Table */}
+                  {competitorData.key_features && competitorData.key_features.length > 0 && (
+                    <div className="bg-background rounded-lg border border-border p-4 md:p-5 shadow-sm mt-6">
+                      <h3 className="text-xs font-semibold text-foreground mb-4">Feature Matrix Comparison</h3>
+                      <div className="overflow-x-auto custom-scrollbar">
+                        <table className="w-full border-collapse text-left text-[11px] font-body">
+                          <thead>
+                            <tr className="border-b border-border/80 text-muted-foreground font-medium bg-secondary/35">
+                              <th className="py-2 px-3 min-w-[150px]">Capability / Feature</th>
+                              <th className="py-2 px-3 uppercase text-accent font-semibold text-center bg-accent/5">
+                                {competitorData.target_company_name} (You)
+                              </th>
+                              {competitorData.competitors.map((comp, idx) => (
+                                <th key={idx} className="py-2 px-3 uppercase text-center">{comp.name}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/50">
+                            {competitorData.key_features.map((feat, idx) => (
+                              <tr key={idx} className="hover:bg-secondary/10 transition-colors">
+                                <td className="py-2.5 px-3 font-medium text-foreground">{feat.feature_name}</td>
+                                <td className="py-2.5 px-3 bg-accent/[0.01] border-x border-border/20">
+                                  <div className="flex justify-center">
+                                    {feat.target_has ? (
+                                      <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                                    ) : (
+                                      <X className="h-4 w-4 text-red-400 shrink-0" />
+                                    )}
+                                  </div>
+                                </td>
+                                {feat.competitors_have.map((cFeat, cIdx) => (
+                                  <td key={cIdx} className="py-2.5 px-3">
+                                    <div className="flex justify-center">
+                                      {cFeat.has ? (
+                                        <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                                      ) : (
+                                        <X className="h-4 w-4 text-red-400 shrink-0" />
+                                      )}
+                                    </div>
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
-            </AnimatePresence>
-          </div>
+            </div>
+          )}
+
+          {/* Market Trends View Panel */}
+          {activeView === 'market-trends' && (
+            <div className="bg-background rounded-lg border border-border p-8 text-center shadow-sm flex flex-col items-center justify-center min-h-[400px] text-left max-w-xl mx-auto my-6 animate-in fade-in duration-300">
+              <div className="h-12 w-12 bg-accent/10 border border-accent/20 rounded-full flex items-center justify-center text-accent mb-4 animate-pulse">
+                <LineChart className="h-5 w-5" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground tracking-tight">Market Trends Dashboard</h3>
+              <p className="text-[11px] text-muted-foreground mt-2 text-center leading-relaxed font-body">
+                Unlock industry pricing shifts, market size tracking, and technology trends synthesized across all historical scans. 
+              </p>
+              <div className="border border-border/80 rounded-lg p-4 bg-secondary/35 w-full mt-4 text-[10px] space-y-2">
+                <p className="font-semibold text-foreground">Planned Features:</p>
+                <ul className="list-disc ml-4 space-y-1 text-muted-foreground font-body">
+                  <li>Pricing models mapping (average pricing tiers)</li>
+                  <li>Industry growth rate estimation ($ CAGR)</li>
+                  <li>Emerging regulatory or technical shifts analysis</li>
+                </ul>
+              </div>
+              <button 
+                onClick={() => setActiveView('home')}
+                className="mt-6 rounded-full bg-primary text-primary-foreground hover:bg-primary/95 px-5 py-1.5 text-[10px] font-medium transition-colors cursor-pointer"
+              >
+                Return to Workspace
+              </button>
+            </div>
+          )}
+
+          {/* API Status View Panel */}
+          {activeView === 'api-status' && (
+            <div className="bg-background rounded-lg border border-border p-8 text-center shadow-sm flex flex-col items-center justify-center min-h-[400px] text-left max-w-xl mx-auto my-6 animate-in fade-in duration-300">
+              <div className="h-12 w-12 bg-accent/10 border border-accent/20 rounded-full flex items-center justify-center text-accent mb-4 animate-pulse">
+                <Activity className="h-5 w-5" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground tracking-tight">Agent Connection Console</h3>
+              <p className="text-[11px] text-muted-foreground mt-2 text-center leading-relaxed font-body">
+                Monitor live agent task performance, Tavily/Gemini key rate limits, average latencies, and scan histories.
+              </p>
+              <div className="border border-border/80 rounded-lg p-4 bg-secondary/35 w-full mt-4 text-[10px] space-y-2">
+                <p className="font-semibold text-foreground">Planned Features:</p>
+                <ul className="list-disc ml-4 space-y-1 text-muted-foreground font-body">
+                  <li>Tavily / Gemini API credentials health validation check</li>
+                  <li>Live SSE connection heartbeat stream</li>
+                  <li>Usage counters & limits dashboard for team workspaces</li>
+                </ul>
+              </div>
+              <button 
+                onClick={() => setActiveView('home')}
+                className="mt-6 rounded-full bg-primary text-primary-foreground hover:bg-primary/95 px-5 py-1.5 text-[10px] font-medium transition-colors cursor-pointer"
+              >
+                Return to Workspace
+              </button>
+            </div>
+          )}
         </main>
       </div>
 

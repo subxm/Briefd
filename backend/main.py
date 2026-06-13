@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException, Header, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pdf_generator import generate_briefing_pdf
+from competitors_extractor import extract_competitors_intelligence
 from pydantic import BaseModel
 import httpx
 
@@ -239,6 +240,28 @@ async def get_briefing_pdf(briefing_id: int, current_user: dict = Depends(get_cu
             "Access-Control-Expose-Headers": "Content-Disposition"
         }
     )
+
+@app.get("/briefings/{briefing_id}/competitors")
+async def get_briefing_competitors(briefing_id: int, current_user: dict = Depends(get_current_user)):
+    """
+    Parses the briefing text to extract structured competitor profiles and feature matrix.
+    Protected by Auth.
+    """
+    briefing = await get_briefing_detail(briefing_id, current_user)
+    briefing_text = briefing.get("briefing_text", "")
+    
+    if not briefing_text:
+        raise HTTPException(status_code=404, detail="Briefing content is empty.")
+        
+    try:
+        # Generate structured JSON matrix
+        matrix_json_str = extract_competitors_intelligence(briefing_text)
+        # Parse it back to python dict to return as JSON response
+        matrix_data = json.loads(matrix_json_str)
+        return matrix_data
+    except Exception as e:
+        logger.error(f"Failed to extract competitor intelligence: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to analyze competitors: {str(e)}")
 
 # --- RESEARCH PIPELINE ENDPOINT ---
 @app.get("/")
