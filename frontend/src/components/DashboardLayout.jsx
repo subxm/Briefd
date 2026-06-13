@@ -51,11 +51,10 @@ export default function DashboardLayout({ children }) {
       {/* Top Bar */}
       <header className="h-12 border-b border-border flex items-center justify-between px-4 select-none relative z-30 bg-background shadow-sm">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
-          <div className="h-5 w-5 bg-primary text-primary-foreground rounded flex items-center justify-center font-bold text-[10px]">
+          <div className="h-5 w-5 bg-primary text-primary-foreground rounded flex items-center justify-center font-bold text-[10px] shrink-0">
             B
           </div>
-          <span className="font-semibold text-[13px] text-foreground">Briefd</span>
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60" />
+          <span className="font-bold text-[15.5px] text-foreground tracking-tight">Briefd</span>
         </div>
 
         {/* Search Bar / CMD Box */}
@@ -75,7 +74,7 @@ export default function DashboardLayout({ children }) {
           >
             <span>New Research</span>
           </button>
-          <div className="relative text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+          <div className="relative text-muted-foreground hover:text-foreground transition-colors cursor-pointer" onClick={() => navigate('/notifications')}>
             <Bell className="h-3.5 w-3.5" />
             <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 bg-accent rounded-full"></span>
           </div>
@@ -124,59 +123,59 @@ export default function DashboardLayout({ children }) {
       {/* Main Body */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* Sidebar (w-40) */}
-        <aside className="w-40 border-r border-border p-3 flex flex-col justify-between select-none bg-background/50 hidden md:flex text-[11px] text-left">
+        {/* Sidebar (w-48) */}
+        <aside className="w-48 border-r border-border p-3 flex flex-col justify-between select-none bg-background/50 hidden md:flex text-[12.5px] text-left">
           <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-1">
             <div className="space-y-1">
               <button 
                 onClick={() => navigate('/dashboard')}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded transition-all cursor-pointer ${
+                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
                   activePath === '/dashboard' 
                     ? 'bg-secondary text-foreground font-semibold' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
                 }`}
               >
-                <Home className={`h-3.5 w-3.5 ${activePath === '/dashboard' ? 'text-accent' : ''}`} />
+                <Home className={`h-4 w-4 ${activePath === '/dashboard' ? 'text-accent' : ''}`} />
                 <span>Home</span>
               </button>
               <button 
                 onClick={() => navigate('/competitors')}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded transition-all cursor-pointer ${
+                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
                   activePath === '/competitors' 
                     ? 'bg-secondary text-foreground font-semibold' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
                 }`}
               >
-                <Users className={`h-3.5 w-3.5 ${activePath === '/competitors' ? 'text-accent' : ''}`} />
+                <Users className={`h-4 w-4 ${activePath === '/competitors' ? 'text-accent' : ''}`} />
                 <span>Competitors</span>
               </button>
               <button 
                 onClick={() => navigate('/market-trends')}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded transition-all cursor-pointer ${
+                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
                   activePath === '/market-trends' 
                     ? 'bg-secondary text-foreground font-semibold' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
                 }`}
               >
-                <LineChart className={`h-3.5 w-3.5 ${activePath === '/market-trends' ? 'text-accent' : ''}`} />
+                <LineChart className={`h-4 w-4 ${activePath === '/market-trends' ? 'text-accent' : ''}`} />
                 <span>Market Trends</span>
               </button>
               <button 
                 onClick={() => navigate('/api-status')}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded transition-all cursor-pointer ${
+                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
                   activePath === '/api-status' 
                     ? 'bg-secondary text-foreground font-semibold' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
                 }`}
               >
-                <Activity className={`h-3.5 w-3.5 ${activePath === '/api-status' ? 'text-accent' : ''}`} />
+                <Activity className={`h-4 w-4 ${activePath === '/api-status' ? 'text-accent' : ''}`} />
                 <span>API Status</span>
               </button>
             </div>
 
             {/* Briefings History list */}
             <div className="space-y-2 pt-2 border-t border-border/60">
-              <p className="px-2.5 text-[9px] font-medium text-muted-foreground uppercase tracking-wider">Briefings History</p>
+              <p className="px-2.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Briefings History</p>
               <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar px-1">
                 {briefingsHistory.map((brief) => (
                   <button 
@@ -187,28 +186,42 @@ export default function DashboardLayout({ children }) {
                         navigate('/dashboard'); // Switch to home dashboard when loading history brief
                       }
                     }}
-                    className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors cursor-pointer text-[10px] truncate"
+                    className="w-full text-left flex items-center gap-2 px-2 py-2 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors cursor-pointer text-[11.5px] truncate"
                   >
-                    <FileText className="h-3.5 w-3.5 text-accent/80 shrink-0" />
+                    <FileText className="h-4 w-4 text-accent/80 shrink-0" />
                     <span className="truncate">{brief.company_name}</span>
                   </button>
                 ))}
                 {briefingsHistory.length === 0 && (
-                  <p className="px-2.5 py-1 text-[10px] text-muted-foreground/60 italic">No past scans.</p>
+                  <p className="px-2.5 py-1 text-[11.5px] text-muted-foreground/60 italic">No past scans.</p>
                 )}
               </div>
             </div>
 
             <div className="space-y-2 pt-2 border-t border-border/60">
-              <p className="px-2.5 text-[9px] font-medium text-muted-foreground uppercase tracking-wider">Feeds & Settings</p>
+              <p className="px-2.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Feeds & Settings</p>
               <div className="space-y-1">
-                <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                  <Bell className="h-3.5 w-3.5" />
+                <button 
+                  onClick={() => navigate('/notifications')}
+                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
+                    activePath === '/notifications' 
+                      ? 'bg-secondary text-foreground font-semibold' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                  }`}
+                >
+                  <Bell className={`h-4 w-4 ${activePath === '/notifications' ? 'text-accent' : ''}`} />
                   <span>Notifications</span>
                 </button>
-                <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-                  <Settings className="h-3.5 w-3.5" />
-                  <span>Preferences</span>
+                <button 
+                  onClick={() => navigate('/settings')}
+                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
+                    activePath === '/settings' 
+                      ? 'bg-secondary text-foreground font-semibold' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                  }`}
+                >
+                  <Settings className={`h-4 w-4 ${activePath === '/settings' ? 'text-accent' : ''}`} />
+                  <span>Settings</span>
                 </button>
               </div>
             </div>
@@ -216,10 +229,10 @@ export default function DashboardLayout({ children }) {
 
           <div className="space-y-2 border-t border-border/60 pt-3 shrink-0">
             {user && (
-              <div className="px-2.5 text-[10px]">
+              <div className="px-2.5 text-[11.5px]">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-muted-foreground">Tier:</span>
-                  <span className={`px-2 py-0.5 rounded-full text-[8.5px] font-semibold uppercase tracking-wider ${
+                  <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-semibold uppercase tracking-wider ${
                     user.tier === 'pro' 
                       ? 'bg-accent/15 text-accent border border-accent/20' 
                       : 'bg-secondary text-muted-foreground border border-border'
@@ -229,20 +242,20 @@ export default function DashboardLayout({ children }) {
                 </div>
                 {user.tier !== 'pro' ? (
                   <div className="space-y-2">
-                    <div className="flex justify-between text-[9px] text-muted-foreground/85">
+                    <div className="flex justify-between text-[10px] text-muted-foreground/85">
                       <span>Scans today:</span>
                       <span className="font-semibold text-foreground">{user.scans_today} / 2</span>
                     </div>
                     <button 
                       onClick={() => setShowLimitModal(true)}
-                      className="w-full py-1.5 bg-accent text-accent-foreground hover:bg-accent/90 rounded text-[9.5px] font-semibold transition-all cursor-pointer shadow-sm text-center flex items-center justify-center gap-1"
+                      className="w-full py-2 bg-accent text-accent-foreground hover:bg-accent/90 rounded text-[10.5px] font-semibold transition-all cursor-pointer shadow-sm text-center flex items-center justify-center gap-1.5"
                     >
                       <Sparkles className="h-2.5 w-2.5 animate-pulse" />
                       <span>Upgrade Plan</span>
                     </button>
                   </div>
                 ) : (
-                  <div className="flex justify-between text-[9px] text-muted-foreground/85">
+                  <div className="flex justify-between text-[10px] text-muted-foreground/85">
                     <span>Scans:</span>
                     <span className="text-emerald-600 font-semibold flex items-center gap-1">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -253,8 +266,8 @@ export default function DashboardLayout({ children }) {
               </div>
             )}
             
-            <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
-              <HelpCircle className="h-3.5 w-3.5" />
+            <button className="w-full flex items-center gap-2 px-2.5 py-2 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+              <HelpCircle className="h-4 w-4" />
               <span>Support</span>
             </button>
           </div>

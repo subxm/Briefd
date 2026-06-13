@@ -9,6 +9,8 @@ import DashboardPage from './pages/DashboardPage';
 import CompetitorsPage from './pages/CompetitorsPage';
 import MarketTrendsPage from './pages/MarketTrendsPage';
 import ApiStatusPage from './pages/ApiStatusPage';
+import NotificationsPage from './pages/NotificationsPage';
+import SettingsPage from './pages/SettingsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 
@@ -30,6 +32,8 @@ export default function App() {
           <Route path="/competitors" element={<CompetitorsPage />} />
           <Route path="/market-trends" element={<MarketTrendsPage />} />
           <Route path="/api-status" element={<ApiStatusPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
 
           {/* Fallback Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
