@@ -262,16 +262,6 @@ export default function LandingPage() {
                     <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
                   </div>
                   <button 
-                    onClick={() => {
-                      setShowProfileMenu(false);
-                      navigate('/dashboard');
-                    }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-secondary transition-colors cursor-pointer text-foreground"
-                  >
-                    <Home className="h-3.5 w-3.5 text-accent" />
-                    <span>Dashboard</span>
-                  </button>
-                  <button 
                     onClick={async () => {
                       setShowProfileMenu(false);
                       await logout();
