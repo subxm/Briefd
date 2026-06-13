@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Bell, ChevronDown, Home, CreditCard, 
   LineChart, Settings, HelpCircle, Activity, Sparkles, LogOut,
-  FileText, Users
+  FileText, Users, CheckCircle, Loader2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -21,6 +21,11 @@ export default function DashboardLayout({ children }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
+
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportMsg, setSupportMsg] = useState('');
+  const [isSendingSupport, setIsSendingSupport] = useState(false);
+  const [supportSuccess, setSupportSuccess] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -337,7 +342,10 @@ export default function DashboardLayout({ children }) {
               </div>
             )}
             
-            <button className="w-full flex items-center gap-2 px-2.5 py-2 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            <button 
+              onClick={() => setShowSupportModal(true)}
+              className="w-full flex items-center gap-2 px-2.5 py-2 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
               <HelpCircle className="h-4 w-4" />
               <span>Support</span>
             </button>
@@ -386,6 +394,109 @@ export default function DashboardLayout({ children }) {
                   Cancel
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Support Ticket Modal */}
+      <AnimatePresence>
+        {showSupportModal && (
+          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm bg-background border border-border rounded-xl p-6 shadow-dashboard text-left"
+            >
+              {!supportSuccess ? (
+                <>
+                  <div className="h-10 w-10 bg-accent/15 text-accent rounded-full flex items-center justify-center mb-4">
+                    <HelpCircle className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground tracking-tight">Contact Briefd Support</h3>
+                  <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed font-body">
+                    Drop us a message below and our customer support agents will get back to you shortly.
+                  </p>
+                  
+                  <div className="mt-4 space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-medium text-muted-foreground">Registered Email</label>
+                      <input
+                        type="email"
+                        value={user?.email || ''}
+                        disabled
+                        className="w-full h-8 bg-secondary border border-border px-3 rounded text-[11px] text-muted-foreground/85 cursor-not-allowed"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-medium text-muted-foreground">Message / Query</label>
+                      <textarea
+                        value={supportMsg}
+                        onChange={(e) => setSupportMsg(e.target.value)}
+                        placeholder="Describe your issue or feedback..."
+                        className="w-full bg-background border border-border p-2.5 rounded text-[11px] text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-accent outline-none min-h-[90px] resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex flex-col gap-2">
+                    <button
+                      onClick={() => {
+                        if (!supportMsg.trim()) {
+                          alert("Please enter a message.");
+                          return;
+                        }
+                        setIsSendingSupport(true);
+                        setTimeout(() => {
+                          setIsSendingSupport(false);
+                          setSupportSuccess(true);
+                          setSupportMsg('');
+                        }, 1200);
+                      }}
+                      disabled={isSendingSupport || !supportMsg.trim()}
+                      className="w-full h-10 bg-accent text-accent-foreground hover:bg-accent/90 rounded-[6px] text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                    >
+                      {isSendingSupport ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        <span>Submit Ticket</span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowSupportModal(false);
+                        setSupportMsg('');
+                      }}
+                      className="w-full h-10 bg-secondary text-foreground hover:bg-secondary/80 rounded-[6px] text-xs font-medium transition-all flex items-center justify-center cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <div className="h-12 w-12 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground tracking-tight">Support Ticket Submitted!</h3>
+                  <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed px-2">
+                    We've received your request. A confirmation copy has been sent to your email. We typically reply in under 24 hours.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowSupportModal(false);
+                      setSupportSuccess(false);
+                    }}
+                    className="mt-6 w-full h-10 bg-secondary text-foreground hover:bg-secondary/80 rounded-[6px] text-xs font-medium transition-all flex items-center justify-center cursor-pointer"
+                  >
+                    Close Window
+                  </button>
+                </div>
+              )}
             </motion.div>
           </div>
         )}
