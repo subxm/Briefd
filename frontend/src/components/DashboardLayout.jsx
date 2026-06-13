@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -21,6 +21,40 @@ export default function DashboardLayout({ children }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const filteredBriefings = briefingsHistory.filter(brief => 
+    brief.company_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter' && filteredBriefings.length > 0) {
+      const topMatch = filteredBriefings[0];
+      loadHistoricalBriefing(topMatch.id);
+      setSearchQuery('');
+      setIsSearchFocused(false);
+      if (activePath !== '/dashboard') {
+        navigate('/dashboard');
+      }
+    } else if (e.key === 'Escape') {
+      setIsSearchFocused(false);
+      searchInputRef.current?.blur();
+    }
+  };
 
   const handleUpgradeClick = async () => {
     setIsUpgrading(true);
@@ -58,10 +92,55 @@ export default function DashboardLayout({ children }) {
         </div>
 
         {/* Search Bar / CMD Box */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-secondary rounded-md border border-border w-64 text-muted-foreground/60 text-[11px] text-left">
-          <Search className="h-3.5 w-3.5" />
-          <span className="flex-1">Search briefings...</span>
-          <kbd className="text-[9px] bg-background border border-border px-1 rounded text-muted-foreground/50 font-mono">⌘K</kbd>
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-secondary rounded-md border border-border w-64 text-foreground text-[11px] text-left relative">
+          <Search className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder="Search briefings..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setIsSearchFocused(true)}
+            onKeyDown={handleSearchKeyDown}
+            className="flex-1 bg-transparent border-0 outline-none text-foreground placeholder-muted-foreground/60 w-full text-[11px] focus:ring-0 p-0"
+          />
+          {!searchQuery && (
+            <kbd className="text-[9px] bg-background border border-border px-1 rounded text-muted-foreground/50 font-mono select-none">⌘K</kbd>
+          )}
+
+          {/* Search Dropdown Panel */}
+          {isSearchFocused && (
+            <>
+              {/* Backdrop */}
+              <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsSearchFocused(false)} />
+              <div className="absolute top-8 left-0 w-64 bg-background border border-border rounded-lg shadow-dashboard p-1.5 z-50 text-left text-[11px] max-h-48 overflow-y-auto custom-scrollbar">
+                {filteredBriefings.length > 0 ? (
+                  <div className="space-y-0.5">
+                    <p className="px-2 py-1 text-[9px] text-muted-foreground/60 uppercase font-semibold select-none">Matching Briefings</p>
+                    {filteredBriefings.map(brief => (
+                      <button
+                        key={brief.id}
+                        onClick={() => {
+                          loadHistoricalBriefing(brief.id);
+                          setSearchQuery('');
+                          setIsSearchFocused(false);
+                          if (activePath !== '/dashboard') {
+                            navigate('/dashboard');
+                          }
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 hover:bg-secondary rounded transition-colors flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground text-[10px] truncate"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-accent/80 shrink-0" />
+                        <span className="truncate">{brief.company_name}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="px-2 py-2 text-[10px] text-muted-foreground/60 italic text-center select-none">No briefings found.</p>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Actions + Profile */}
