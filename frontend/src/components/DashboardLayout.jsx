@@ -484,7 +484,7 @@ export default function DashboardLayout({ children }) {
                   </div>
                   <h3 className="text-sm font-semibold text-foreground tracking-tight">Support Ticket Submitted!</h3>
                   <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed px-2">
-                    We've received your request. A confirmation copy has been sent to your email. We typically reply in under 24 hours.
+                    We've received your request. Our support team has been notified and we will respond to you shortly.
                   </p>
                   <button
                     onClick={() => {
