@@ -218,7 +218,14 @@ export default function LandingPage() {
             <button onClick={() => scrollToSection('plans')} className="text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/70 px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer bg-transparent border-0 font-medium font-body">Pricing</button>
           </nav>
           <div className="flex items-center gap-3 z-10">
-            {user ? null : (
+            {user ? (
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-2 text-sm font-medium transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Dashboard
+              </button>
+            ) : (
               <>
                 <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 transition-colors hover:scale-[1.03]">Log In</Link>
                 <button 
