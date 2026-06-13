@@ -39,7 +39,22 @@ export default function DashboardPage() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
 
-  const fetchBriefingsHistory = async () => {
+  // PDF Export and dynamic Modal States
+  const [activeBriefingId, setActiveBriefingId] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [limitModalMode, setLimitModalMode] = useState('limit'); // 'limit' or 'export'
+
+  const resetDashboard = () => {
+    setHasSearched(false);
+    setCompanyName('');
+    setBriefingText('');
+    setCompletedAgents([]);
+    setActiveAgent(null);
+    setErrorMsg(null);
+    setActiveBriefingId(null);
+  };
+
+  const fetchBriefingsHistory = async (justCompletedCompany = null) => {
     if (!token) return;
     try {
       const response = await fetch(`${API_BASE_URL}/briefings`, {
@@ -50,6 +65,12 @@ export default function DashboardPage() {
       if (response.ok) {
         const data = await response.json();
         setBriefingsHistory(data);
+        if (justCompletedCompany && data.length > 0) {
+          const match = data.find(b => b.company_name.toLowerCase() === justCompletedCompany.toLowerCase());
+          if (match) {
+            setActiveBriefingId(match.id);
+          }
+        }
       }
     } catch (err) {
       console.error("Failed to fetch briefings history:", err);
@@ -81,6 +102,7 @@ export default function DashboardPage() {
       const data = await response.json();
       setCompanyName(data.company_name);
       setBriefingText(data.briefing_text);
+      setActiveBriefingId(id);
     } catch (err) {
       setErrorMsg(err.message);
     } finally {
@@ -100,6 +122,47 @@ export default function DashboardPage() {
     }
   };
 
+  const handleExportClick = async () => {
+    if (!activeBriefingId) {
+      alert("No active briefing found to export. Please select a historical briefing or run a new search.");
+      return;
+    }
+    
+    if (user.tier !== 'pro') {
+      setLimitModalMode('export');
+      setShowLimitModal(true);
+      return;
+    }
+    
+    setIsExporting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/briefings/${activeBriefingId}/pdf`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.detail || "Failed to download PDF report.");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Briefd_${companyName.replace(/\s+/g, '_')}_Report.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (err) {
+      alert(err.message || "Failed to export PDF.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleResearchSubmit = async (company) => {
     setCompanyName(company);
     setIsLoading(true);
@@ -108,6 +171,7 @@ export default function DashboardPage() {
     setCompletedAgents([]);
     setBriefingText('');
     setErrorMsg(null);
+    setActiveBriefingId(null);
 
     try {
       const response = await fetch(`${API_BASE_URL}/research`, {
@@ -128,6 +192,7 @@ export default function DashboardPage() {
         if (response.status === 403) {
           setErrorMsg(null);
           setHasSearched(false);
+          setLimitModalMode('limit');
           setShowLimitModal(true);
           return;
         }
@@ -171,7 +236,7 @@ export default function DashboardPage() {
                 // Sync user state and search history upon scan completion
                 setTimeout(() => {
                   refreshUser();
-                  fetchBriefingsHistory();
+                  fetchBriefingsHistory(company);
                 }, 1000);
               } else if (currentEvent === 'error') {
                 setErrorMsg(data.message);
@@ -234,14 +299,7 @@ export default function DashboardPage() {
         {/* Actions + Profile */}
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => {
-              setHasSearched(false);
-              setCompanyName('');
-              setBriefingText('');
-              setCompletedAgents([]);
-              setActiveAgent(null);
-              setErrorMsg(null);
-            }}
+            onClick={resetDashboard}
             className="px-2.5 py-1 bg-secondary border border-border text-foreground hover:bg-secondary/80 rounded-md text-[11px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
           >
             <span>New Research</span>
@@ -300,14 +358,7 @@ export default function DashboardPage() {
           <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-1">
             <div className="space-y-1">
               <button 
-                onClick={() => {
-                  setHasSearched(false);
-                  setCompanyName('');
-                  setBriefingText('');
-                  setCompletedAgents([]);
-                  setActiveAgent(null);
-                  setErrorMsg(null);
-                }}
+                onClick={resetDashboard}
                 className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded bg-secondary text-foreground font-medium transition-colors cursor-pointer"
               >
                 <Home className="h-3.5 w-3.5 text-accent" />
@@ -417,19 +468,23 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-wrap gap-1.5">
               <button 
-                onClick={() => {
-                  setHasSearched(false);
-                  setCompanyName('');
-                  setBriefingText('');
-                  setCompletedAgents([]);
-                  setActiveAgent(null);
-                  setErrorMsg(null);
-                }}
+                onClick={resetDashboard}
                 className="rounded-full bg-primary text-primary-foreground hover:bg-primary/95 px-3.5 py-1 text-[10px] font-medium transition-colors shadow-sm cursor-pointer"
               >
                 New Scan
               </button>
-              <button className="rounded-full bg-background border border-border text-foreground hover:bg-secondary px-3.5 py-1 text-[10px] font-medium transition-colors cursor-pointer">Export Briefing</button>
+              <button 
+                onClick={handleExportClick}
+                disabled={!briefingText || isExporting}
+                className="rounded-full bg-background border border-border text-foreground hover:bg-secondary px-3.5 py-1 text-[10px] font-medium transition-colors cursor-pointer flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isExporting ? (
+                  <span className="h-3 w-3 border-2 border-accent border-t-transparent rounded-full animate-spin"></span>
+                ) : user.tier !== 'pro' ? (
+                  <Sparkles className="h-3 w-3 text-accent shrink-0 animate-pulse" />
+                ) : null}
+                <span>{isExporting ? 'Exporting...' : 'Export PDF'}</span>
+              </button>
               <button className="rounded-full bg-background border border-border text-foreground hover:bg-secondary px-3.5 py-1 text-[10px] font-medium transition-colors cursor-pointer">Invite Team</button>
               <button className="rounded-full bg-background border border-border text-foreground hover:bg-secondary px-3.5 py-1 text-[10px] font-medium transition-colors cursor-pointer">API Status</button>
             </div>
@@ -528,9 +583,13 @@ export default function DashboardPage() {
               <div className="h-10 w-10 bg-accent/15 text-accent rounded-full flex items-center justify-center mb-4">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground tracking-tight">Daily Scan Limit Reached</h3>
-              <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
-                The Free Starter plan is limited to 2 competitive scans per day. Upgrade to the Professional plan for ₹499 one-time payment to unlock unlimited scans, advanced market position analysis, and export features.
+              <h3 className="text-sm font-semibold text-foreground tracking-tight">
+                {limitModalMode === 'export' ? 'Unlock Premium PDF Export' : 'Daily Scan Limit Reached'}
+              </h3>
+              <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed font-body">
+                {limitModalMode === 'export' 
+                  ? 'Downloading reports as professionally-formatted PDFs is a Premium feature. Upgrade to the Professional plan for a ₹499 one-time payment to unlock PDF exports, unlimited scans, and advanced agent analysis.'
+                  : 'The Free Starter plan is limited to 2 competitive scans per day. Upgrade to the Professional plan for a ₹499 one-time payment to unlock unlimited scans, advanced market position analysis, and export features.'}
               </p>
               <div className="mt-6 flex flex-col gap-2">
                 <button

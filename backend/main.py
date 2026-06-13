@@ -3,9 +3,10 @@ import logging
 import json
 from datetime import datetime
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi import FastAPI, HTTPException, Header, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from pdf_generator import generate_briefing_pdf
 from pydantic import BaseModel
 import httpx
 
@@ -204,6 +205,40 @@ async def get_briefing_detail(briefing_id: int, current_user: dict = Depends(get
             raise HTTPException(status_code=404, detail="Briefing not found.")
             
         return response.json()[0]
+
+@app.get("/briefings/{briefing_id}/pdf")
+async def get_briefing_pdf(briefing_id: int, current_user: dict = Depends(get_current_user)):
+    """
+    Generates and downloads a beautifully styled PDF of the briefing.
+    Only available to Pro tier users.
+    """
+    if current_user.get("tier") != "pro":
+        raise HTTPException(
+            status_code=403,
+            detail="PDF Export is a premium feature. Please upgrade to the Professional plan to download reports."
+        )
+        
+    briefing = await get_briefing_detail(briefing_id, current_user)
+    
+    company_name = briefing.get("company_name", "Report")
+    briefing_text = briefing.get("briefing_text", "")
+    
+    try:
+        pdf_bytes = generate_briefing_pdf(company_name, briefing_text)
+    except Exception as e:
+        logger.error(f"Failed to generate PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {str(e)}")
+        
+    safe_filename = "".join(c for c in company_name if c.isalnum() or c in (" ", "_", "-")).strip().replace(" ", "_")
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=Briefd_{safe_filename}_Report.pdf",
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
+    )
 
 # --- RESEARCH PIPELINE ENDPOINT ---
 @app.get("/")
