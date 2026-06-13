@@ -126,7 +126,7 @@ export default function CompetitorsPage() {
         </div>
       ) : user.tier !== 'pro' ? (
         /* Upgrade Gate Screen */
-        <div className="relative bg-background rounded-lg border border-border p-6 md:p-8 shadow-sm overflow-hidden text-left max-w-4xl mx-auto">
+        <div className="relative bg-background rounded-lg border border-border p-6 md:p-8 shadow-sm overflow-hidden text-left max-w-4xl w-full">
           {/* Subtle Background Glow */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-accent/5 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
           
@@ -212,7 +212,7 @@ export default function CompetitorsPage() {
         </div>
       ) : (
         /* Pro Content Loading & Display */
-        <div className="space-y-6 max-w-5xl mx-auto text-left">
+        <div className="space-y-6 max-w-5xl text-left w-full">
           {isDataLoading && (
             <div className="flex flex-col items-center justify-center py-20 text-center select-none text-muted-foreground">
               <Loader2 className="h-8 w-8 text-accent animate-spin mb-4" />
@@ -224,7 +224,7 @@ export default function CompetitorsPage() {
           )}
 
           {errorMsg && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 text-red-700 text-[12px] font-body max-w-2xl mx-auto text-left shadow-sm">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 text-red-700 text-[12px] font-body max-w-2xl text-left shadow-sm w-full">
               <ShieldAlert className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
               <div>
                 <p className="font-semibold">Analysis Failed</p>

@@ -119,7 +119,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-6 text-left">
+      <div className="max-w-4xl flex flex-col md:flex-row gap-6 text-left w-full">
         {/* Navigation Tabs (Vertical) */}
         <div className="w-full md:w-48 shrink-0 flex flex-row md:flex-col gap-1 border-b md:border-b-0 md:border-r border-border pb-4 md:pb-0 md:pr-4">
           {[

@@ -116,7 +116,7 @@ export default function NotificationsPage() {
         </button>
       </div>
 
-      <div className="max-w-3xl mx-auto space-y-4 text-left">
+      <div className="max-w-3xl space-y-4 text-left w-full">
         {/* Filters */}
         <div className="flex border-b border-border">
           {[
