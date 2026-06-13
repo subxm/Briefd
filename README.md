@@ -94,27 +94,7 @@ Agent 4 (Briefing Writer) applies strict syntax formatting instructions to the o
 
 Briefd utilizes Supabase PostgreSQL for authentication state and data persistence.
 
-```mermaid
-erDiagram
-    profiles {
-        uuid id PK
-        text email
-        text name
-        text tier
-        integer scans_today
-        text last_scan_date
-        integer total_scans
-        timestamp updated_at
-    }
-    briefings {
-        bigint id PK
-        uuid user_id FK
-        text company_name
-        text briefing_text
-        timestamp created_at
-    }
-    profiles ||--o{ briefings : owns
-```
+
 
 ### Profiles Table (`public.profiles`)
 Represents user metadata, billing tiers, and scan counters. Connected to Supabase Auth.
