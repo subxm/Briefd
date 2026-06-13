@@ -5,13 +5,14 @@ import {
   Play, Search, Bell, ChevronDown, Home, CheckSquare, 
   ArrowLeftRight, CreditCard, Landmark, LineChart, 
   Settings, HelpCircle, Activity, Sparkles, Check,
-  Users, TrendingUp, FileText, ChevronRight
+  Users, TrendingUp, FileText, ChevronRight, User, LogOut
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function LandingPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
@@ -217,17 +218,7 @@ export default function LandingPage() {
             <button onClick={() => scrollToSection('plans')} className="text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/70 px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer bg-transparent border-0 font-medium font-body">Pricing</button>
           </nav>
           <div className="flex items-center gap-3 z-10">
-            {user ? (
-              <>
-                <span className="text-xs text-muted-foreground hidden sm:inline">Logged in as {user.name}</span>
-                <button 
-                  onClick={() => navigate('/dashboard')}
-                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-2 text-sm font-medium transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Dashboard
-                </button>
-              </>
-            ) : (
+            {user ? null : (
               <>
                 <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 transition-colors hover:scale-[1.03]">Log In</Link>
                 <button 
@@ -241,6 +232,55 @@ export default function LandingPage() {
           </div>
         </header>
       </div>
+
+      {/* Floating profile avatar on the complete extreme right of the viewport */}
+      {user && (
+        <div className={`fixed right-6 z-50 transition-all duration-300 ${
+          isScrolled ? 'top-[16px]' : 'top-[26px]'
+        }`}>
+          <div className="relative">
+            <button 
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm border border-border text-foreground hover:border-accent hover:text-accent flex items-center justify-center shadow-md cursor-pointer transition-all hover:scale-105 active:scale-95"
+            >
+              <User className="h-4.5 w-4.5 text-muted-foreground hover:text-accent transition-colors" />
+            </button>
+            
+            {showProfileMenu && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setShowProfileMenu(false)} />
+                <div className="absolute right-0 mt-2 w-48 bg-background border border-border rounded-lg shadow-dashboard p-1.5 z-40 text-left text-[11px]">
+                  <div className="px-2.5 py-2 border-b border-border/60 mb-1">
+                    <p className="font-semibold text-foreground">{user.name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      navigate('/dashboard');
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-secondary transition-colors cursor-pointer text-foreground"
+                  >
+                    <Home className="h-3.5 w-3.5 text-accent" />
+                    <span>Dashboard</span>
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      setShowProfileMenu(false);
+                      await logout();
+                      navigate('/');
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Hero Section Container */}
       <main className="relative z-10 w-full px-6 md:px-12 lg:px-20 pt-28 pb-12 select-text flex flex-col items-center text-center">
