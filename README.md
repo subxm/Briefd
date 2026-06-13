@@ -57,16 +57,16 @@ The orchestrator chains four specialized agents in a sequence, passing the outpu
 Mathematically, let $Q$ represent the user's initial target company query. Let $A_1, A_2, A_3, A_4$ represent the four autonomous agents.
 
 1. **Company Researcher ($A_1$)** generates a structured profile context $C_1$:
-   \[C_1 = A_1(Q)\]
+   $$C_1 = A_1(Q)$$
 
 2. **Competitor Finder ($A_2$)** evaluates the query and the profile context $C_1$ to locate major rivals, producing context $C_2$:
-   \[C_2 = A_2(Q, C_1)\]
+   $$C_2 = A_2(Q, C_1)$$
 
 3. **Market Positioning Analyst ($A_3$)** maps the competitive landscape using the aggregated context, producing context $C_3$:
-   \[C_3 = A_3(Q, C_1, C_2)\]
+   $$C_3 = A_3(Q, C_1, C_2)$$
 
 4. **Briefing Writer ($A_4$)** performs a final synthesis of all accumulated contexts, compiling the final formatted intelligence briefing report $B_R$:
-   \[B_R = A_4(Q, C_1, C_2, C_3)\]
+   $$B_R = A_4(Q, C_1, C_2, C_3)$$
 
 This sequential propagation of context prevents context drift and guides the LLM to write highly relevant sections without losing precision over long pipelines.
 
