@@ -319,7 +319,7 @@ export default function DashboardLayout({ children }) {
                     {user.tier === 'pro' ? 'Pro' : 'Free'}
                   </span>
                 </div>
-                {user.tier !== 'pro' ? (
+                {user.tier !== 'pro' && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-[10px] text-muted-foreground/85">
                       <span>Scans today:</span>
@@ -332,14 +332,6 @@ export default function DashboardLayout({ children }) {
                       <Sparkles className="h-2.5 w-2.5 animate-pulse" />
                       <span>Upgrade Plan</span>
                     </button>
-                  </div>
-                ) : (
-                  <div className="flex justify-between text-[10px] text-muted-foreground/85">
-                    <span>Scans:</span>
-                    <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                      <span>Unlimited</span>
-                    </span>
                   </div>
                 )}
               </div>
