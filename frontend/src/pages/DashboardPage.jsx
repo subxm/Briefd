@@ -8,6 +8,7 @@ import {
   FileText, Users
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../config';
 import SearchBar from '../components/SearchBar';
 import AgentProgress from '../components/AgentProgress';
 import Briefing from '../components/Briefing';
@@ -41,7 +42,7 @@ export default function DashboardPage() {
   const fetchBriefingsHistory = async () => {
     if (!token) return;
     try {
-      const response = await fetch('http://localhost:8000/briefings', {
+      const response = await fetch(`${API_BASE_URL}/briefings`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -69,7 +70,7 @@ export default function DashboardPage() {
     setErrorMsg(null);
     
     try {
-      const response = await fetch(`http://localhost:8000/briefings/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/briefings/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -109,7 +110,7 @@ export default function DashboardPage() {
     setErrorMsg(null);
 
     try {
-      const response = await fetch('http://localhost:8000/research', {
+      const response = await fetch(`${API_BASE_URL}/research`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { API_BASE_URL } from '../config';
 
 const AuthContext = createContext(null);
 
@@ -123,7 +124,7 @@ export const AuthProvider = ({ children }) => {
     if (!token) throw new Error("Unauthorized: No session token found.");
     
     // Call the backend API securely to toggle the tier
-    const response = await fetch('http://localhost:8000/auth/upgrade', {
+    const response = await fetch(`${API_BASE_URL}/auth/upgrade`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
