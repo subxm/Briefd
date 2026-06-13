@@ -1,8 +1,7 @@
 # Briefd — Competitive Research Multi-Agent Tool
 
-Briefd is a premium web application that automates competitive intelligence reporting. The tool deploys a sequential pipeline of 4 autonomous AI agents powered by Google Gemini and Tavily Search to analyze target companies. 
+Briefd is a premium platform designed to automate competitive intelligence reporting. By orchestrating a sequential pipeline of four autonomous AI agents, it conducts deep, multi-dimensional analyses of target companies in real-time.
 
-The application is built as a responsive SaaS dashboard with direct Google OAuth authentication, daily scan credit limits, one-time payment upgrades, and persistent briefings history backed by Supabase.
 
 ---
 
