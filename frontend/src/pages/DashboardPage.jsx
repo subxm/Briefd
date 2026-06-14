@@ -52,7 +52,8 @@ export default function DashboardPage() {
     activeBriefingId, setActiveBriefingId,
     companyName, setCompanyName,
     briefingText, setBriefingText,
-    briefingsHistory, fetchBriefingsHistory
+    briefingsHistory, fetchBriefingsHistory,
+    upgradeToPro
   } = useAuth();
   
   const navigate = useNavigate();
@@ -94,6 +95,21 @@ export default function DashboardPage() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+
+  // Custom limit modal and upgrade processing states
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
+  const handleUpgradeClick = async () => {
+    setIsUpgrading(true);
+    try {
+      await upgradeToPro();
+    } catch (err) {
+      setErrorMsg(err.message || "Failed to upgrade.");
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
 
   // Sync hasSearched when a historical briefing is loaded
   useEffect(() => {
@@ -168,7 +184,7 @@ export default function DashboardPage() {
         if (response.status === 403) {
           setErrorMsg("Daily limit reached. Upgrade to Pro for unlimited scans.");
           setHasSearched(false);
-          alert("Daily scan limit reached! Please upgrade to Pro via the sidebar.");
+          setShowLimitModal(true);
           return;
         }
         const errData = await response.json().catch(() => ({}));
@@ -336,6 +352,47 @@ export default function DashboardPage() {
           </button>
         </motion.div>
       )}
+
+      {/* Credit Limit / Upgrade Modal */}
+      <AnimatePresence>
+        {showLimitModal && (
+          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm bg-background border border-border rounded-xl p-6 shadow-dashboard text-left"
+            >
+              <div className="h-10 w-10 bg-accent/15 text-accent rounded-full flex items-center justify-center mb-4">
+                <Sparkles className="h-5 w-5 animate-pulse" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground tracking-tight">Daily Scan Limit Reached</h3>
+              <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed font-body">
+                Free Starter tier is limited to 2 briefings per day. Upgrade to Professional to unlock unlimited scans, features matrix tables, and vector-sharp PDF downloads.
+              </p>
+              <div className="mt-6 flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    setShowLimitModal(false);
+                    handleUpgradeClick();
+                  }}
+                  disabled={isUpgrading}
+                  className="w-full h-10 bg-accent text-accent-foreground hover:bg-accent/90 rounded-[6px] text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span>{isUpgrading ? 'Upgrading...' : 'Upgrade to Professional (₹499)'}</span>
+                </button>
+                <button
+                  onClick={() => setShowLimitModal(false)}
+                  className="w-full h-10 bg-secondary text-foreground hover:bg-secondary/80 rounded-[6px] text-xs font-medium transition-all flex items-center justify-center cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Research Panel Container */}
       <div className="bg-background rounded-lg border border-border p-4 md:p-5 flex flex-col gap-6 shadow-sm">
