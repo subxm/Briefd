@@ -40,21 +40,26 @@ export const AuthProvider = ({ children }) => {
       if (error) {
         console.error("Error fetching user profile:", error);
         // Fallback to auth details if profile is not found or fails
+        const isPendingPro = typeof window !== 'undefined' && sessionStorage.getItem('pending_pro_upgrade') === 'true';
         setUser({
           id: authUser.id,
           email: authUser.email,
           name: authUser.user_metadata?.name || 'User',
-          tier: 'free',
+          tier: isPendingPro ? 'pro' : 'free',
           scans_today: 0,
           last_scan_date: '',
           total_scans: 0
         });
       } else {
+        if (profile.tier === 'pro' && typeof window !== 'undefined') {
+          sessionStorage.removeItem('pending_pro_upgrade');
+        }
+        const isPendingPro = typeof window !== 'undefined' && sessionStorage.getItem('pending_pro_upgrade') === 'true';
         setUser({
           id: authUser.id,
           email: authUser.email,
           name: profile.name || authUser.user_metadata?.name || 'User',
-          tier: profile.tier || 'free',
+          tier: (profile.tier === 'pro' || isPendingPro) ? 'pro' : (profile.tier || 'free'),
           scans_today: profile.scans_today || 0,
           last_scan_date: profile.last_scan_date || '',
           total_scans: profile.total_scans || 0
@@ -233,7 +238,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ 
-      user, token, login, register, loginWithGoogle, logout, loading, refreshUser, upgradeToPro,
+      user, setUser, token, login, register, loginWithGoogle, logout, loading, refreshUser, upgradeToPro,
       activeBriefingId, setActiveBriefingId,
       companyName, setCompanyName,
       briefingText, setBriefingText,

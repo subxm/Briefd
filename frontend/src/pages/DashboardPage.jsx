@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, AlertCircle } from 'lucide-react';
+import { Sparkles, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
 import SearchBar from '../components/SearchBar';
@@ -48,7 +48,7 @@ const reframeErrorMessage = (rawError) => {
 
 export default function DashboardPage() {
   const { 
-    user, token, loading, refreshUser,
+    user, setUser, token, loading, refreshUser,
     activeBriefingId, setActiveBriefingId,
     companyName, setCompanyName,
     briefingText, setBriefingText,
@@ -65,19 +65,27 @@ export default function DashboardPage() {
   }, [user, loading]);
 
   // Handle payment redirect URL parameters
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
+  const [showPaymentCancel, setShowPaymentCancel] = useState(false);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const paymentStatus = params.get('payment');
     
     if (paymentStatus === 'success') {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('pending_pro_upgrade', 'true');
+      }
+      // Instantly upgrade local state so the sidebar tier badge changes to Pro without delay
+      setUser(prev => prev ? { ...prev, tier: 'pro' } : null);
+      setShowPaymentSuccess(true);
       navigate('/dashboard', { replace: true });
       refreshUser();
-      alert("Payment successful! Welcome to Briefd Professional.");
     } else if (paymentStatus === 'cancel') {
       navigate('/dashboard', { replace: true });
-      alert("Upgrade checkout cancelled.");
+      setShowPaymentCancel(true);
     }
-  }, [navigate, refreshUser]);
+  }, [navigate, refreshUser, setUser]);
 
   // Local research and scan states
   const [isLoading, setIsLoading] = useState(false);
@@ -274,6 +282,60 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* Payment Success Banner */}
+      {showPaymentSuccess && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 bg-emerald-500/[0.03] border border-emerald-500/20 rounded-xl flex items-start justify-between gap-4 text-[12px] font-body text-left shadow-sm"
+        >
+          <div className="flex items-start gap-3">
+            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0 mt-0.5">
+              <CheckCircle className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-emerald-700 dark:text-emerald-400 tracking-tight">Upgrade Successful!</p>
+              <p className="mt-0.5 text-muted-foreground leading-relaxed">
+                Welcome to Briefd Professional. Your account has been upgraded to the Pro tier with unlimited research scans, premium PDF exports, and deep competitor matrix access.
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setShowPaymentSuccess(false)}
+            className="text-muted-foreground hover:text-foreground transition-colors font-medium text-[11px] cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </motion.div>
+      )}
+
+      {/* Payment Cancel Banner */}
+      {showPaymentCancel && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 bg-secondary border border-border/80 rounded-xl flex items-start justify-between gap-4 text-[12px] font-body text-left shadow-sm"
+        >
+          <div className="flex items-start gap-3">
+            <div className="p-1.5 rounded-lg bg-secondary text-muted-foreground shrink-0 mt-0.5">
+              <AlertCircle className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-foreground tracking-tight">Checkout Cancelled</p>
+              <p className="mt-0.5 text-muted-foreground leading-relaxed">
+                The Stripe Checkout payment session was cancelled. No charges were made.
+              </p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setShowPaymentCancel(false)}
+            className="text-muted-foreground hover:text-foreground transition-colors font-medium text-[11px] cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </motion.div>
+      )}
 
       {/* Research Panel Container */}
       <div className="bg-background rounded-lg border border-border p-4 md:p-5 flex flex-col gap-6 shadow-sm">
