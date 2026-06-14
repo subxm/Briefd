@@ -252,19 +252,19 @@ export default function DashboardPage() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="flex flex-col md:flex-row gap-6 border-t border-border/60 pt-5 text-left text-[11px]"
+              className="flex flex-col gap-6 border-t border-border/60 pt-5 text-left text-[11px] w-full"
             >
-              {/* Progress Timeline on the left */}
-              <div className="w-full md:w-60 shrink-0">
-                <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-4">
+              {/* Progress Stepper at the top */}
+              <div className="w-full space-y-2.5">
+                <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Agent Orchestration
                 </h4>
                 <AgentProgress activeAgent={activeAgent} completedAgents={completedAgents} />
               </div>
 
-              {/* Briefing Results on the right */}
-              <div className="flex-1 min-w-0 border-t md:border-t-0 md:border-l border-border/60 pt-5 md:pt-0 md:pl-6">
-                <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-4">
+              {/* Briefing Results below */}
+              <div className="w-full min-w-0 border-t border-border/60 pt-5">
+                <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-4">
                   Briefing Outputs
                 </h4>
                 
