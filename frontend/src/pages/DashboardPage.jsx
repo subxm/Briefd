@@ -387,22 +387,22 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 relative">
                 {[
                   {
-                    step: '01',
+                    step: '1',
                     name: 'Company Researcher',
                     desc: 'Scans search indices, archives news, and builds target profiles.'
                   },
                   {
-                    step: '02',
+                    step: '2',
                     name: 'Competitor Finder',
                     desc: 'Identifies alternatives, extracts rivals, and maps threat cards.'
                   },
                   {
-                    step: '03',
+                    step: '3',
                     name: 'Positioning Analyst',
                     desc: 'Maps feature capability grids and counts differentiator levels.'
                   },
                   {
-                    step: '04',
+                    step: '4',
                     name: 'Briefing Writer',
                     desc: 'Synthesizes all structured agent data into final markdown briefs.'
                   }
@@ -420,7 +420,7 @@ export default function DashboardPage() {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[9.5px] font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full border border-accent/10">
-                          Step {agent.step}
+                          Agent {agent.step}
                         </span>
                       </div>
                       <h5 className="text-[11.5px] font-bold text-foreground leading-tight">{agent.name}</h5>
