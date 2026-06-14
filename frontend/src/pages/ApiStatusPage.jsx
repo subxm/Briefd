@@ -92,13 +92,13 @@ export default function ApiStatusPage() {
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left animate-in fade-in duration-300">
         
         {/* Heartbeat Status Box */}
         <div className="md:col-span-1 bg-background border border-border rounded-xl p-5 shadow-sm space-y-4 flex flex-col justify-between">
           <div className="space-y-1">
             <h4 className="text-[12.5px] font-semibold text-foreground">Heartbeat Node</h4>
-            <p className="text-[10px] text-muted-foreground">Active polling to local uvicorn router.</p>
+            <p className="text-[11px] text-muted-foreground/90">Active polling to local uvicorn router.</p>
           </div>
 
           <div className="py-4 flex flex-col items-center justify-center text-center">
@@ -108,7 +108,7 @@ export default function ApiStatusPage() {
                   <CheckCircle2 className="h-6 w-6" />
                 </div>
                 <h5 className="text-[12px] font-bold text-foreground">Systems Operational</h5>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Core API responded in <span className="font-semibold text-emerald-600">{latency}ms</span></p>
+                <p className="text-[11px] text-muted-foreground/90 mt-0.5 font-body">Core API responded in <span className="font-semibold text-emerald-600">{latency}ms</span></p>
               </>
             ) : isPingLoading ? (
               <>
@@ -116,7 +116,7 @@ export default function ApiStatusPage() {
                   <Loader2 className="h-6 w-6 animate-spin text-accent" />
                 </div>
                 <h5 className="text-[12px] font-bold text-foreground">Ping Request Sent</h5>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Measuring connection round-trip latency...</p>
+                <p className="text-[11px] text-muted-foreground/90 mt-0.5 font-body">Measuring connection round-trip latency...</p>
               </>
             ) : (
               <>
@@ -124,12 +124,12 @@ export default function ApiStatusPage() {
                   <AlertCircle className="h-6 w-6 animate-pulse" />
                 </div>
                 <h5 className="text-[12px] font-bold text-foreground">Connection Lag</h5>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Backend API node did not resolve successfully.</p>
+                <p className="text-[11px] text-muted-foreground/90 mt-0.5 font-body">Backend API node did not resolve successfully.</p>
               </>
             )}
           </div>
 
-          <div className="text-[9.5px] text-muted-foreground bg-secondary px-2.5 py-1.5 rounded border border-border/60">
+          <div className="text-[11px] text-muted-foreground/95 bg-secondary px-2.5 py-1.5 rounded border border-border/60 font-body">
             <span className="font-semibold text-foreground">API Base:</span> {API_BASE_URL}
           </div>
         </div>
@@ -138,12 +138,12 @@ export default function ApiStatusPage() {
         <div className="md:col-span-2 bg-background border border-border rounded-xl p-5 shadow-sm space-y-4 text-left">
           <div className="space-y-1">
             <h4 className="text-[12.5px] font-semibold text-foreground">Dependency Health Grid</h4>
-            <p className="text-[10px] text-muted-foreground">Latency mapping across downstream databases and APIs.</p>
+            <p className="text-[11.5px] text-muted-foreground/90">Latency mapping across downstream databases and APIs.</p>
           </div>
 
           <div className="border border-border rounded-lg overflow-hidden bg-background">
             <table className="min-w-full divide-y divide-border text-left">
-              <thead className="bg-secondary/40 text-[9.5px] font-semibold text-muted-foreground uppercase tracking-wider select-none">
+              <thead className="bg-secondary/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider select-none">
                 <tr>
                   <th className="px-4 py-2.5">Service Name</th>
                   <th className="px-4 py-2.5">Region</th>
@@ -151,7 +151,7 @@ export default function ApiStatusPage() {
                   <th className="px-4 py-2.5 text-right">Latency</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border text-[10.5px] text-muted-foreground">
+              <tbody className="divide-y divide-border text-[11.5px] text-muted-foreground/95 font-body">
                 {nodes.map((node, idx) => (
                   <tr key={idx} className="hover:bg-secondary/10 transition-colors">
                     <td className="px-4 py-3 font-semibold text-foreground/90 flex items-center gap-1.5">
@@ -160,12 +160,12 @@ export default function ApiStatusPage() {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground/80">{node.region}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded-full text-[9px] font-bold border border-emerald-500/10">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded-full text-[9.5px] font-bold border border-emerald-500/10">
                         <span className="h-1 w-1 bg-emerald-500 rounded-full animate-ping"></span>
                         <span>{node.status}</span>
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-[10px] text-foreground">{node.latency}</td>
+                    <td className="px-4 py-3 text-right font-mono text-[11px] text-foreground">{node.latency}</td>
                   </tr>
                 ))}
               </tbody>
@@ -176,16 +176,16 @@ export default function ApiStatusPage() {
       </div>
 
       {/* Latency Performance Mock Area */}
-      <div className="bg-background border border-border rounded-xl p-5 shadow-sm space-y-4 mt-6 text-left">
+      <div className="bg-background border border-border rounded-xl p-5 shadow-sm space-y-4 mt-6 text-left animate-in fade-in duration-300">
         <div>
           <h4 className="text-[12.5px] font-semibold text-foreground flex items-center gap-1">
             <Activity className="h-4 w-4 text-accent" />
             <span>Response Latency Profile (Last 10 Scans)</span>
           </h4>
-          <p className="text-[10px] text-muted-foreground">Historical visual map of network latency response.</p>
+          <p className="text-[11px] text-muted-foreground/90">Historical visual map of network latency response.</p>
         </div>
 
-        <div className="h-24 w-full flex items-end justify-between gap-1 border-b border-border/80 pb-2 pt-4">
+        <div className="h-24 w-full flex items-end justify-between gap-1.5 border-b border-border/80 pb-2 pt-4 relative">
           {[
             { val: 42, label: 'Scan 1' },
             { val: 38, label: 'Scan 2' },
@@ -195,22 +195,26 @@ export default function ApiStatusPage() {
             { val: 28, label: 'Scan 6' },
             { val: 50, label: 'Scan 7' },
             { val: latency ? Math.min(latency, 200) : 35, label: 'Scan 8' }
-          ].map((bar, i) => (
-            <div key={i} className="flex-1 flex flex-col justify-end h-full group">
-              <div 
-                className={`w-full rounded-t-sm transition-all duration-300 ${
-                  bar.val > 100 
-                    ? 'bg-red-500/20 border-t-2 border-red-500' 
-                    : 'bg-accent/25 border-t-2 border-accent'
-                }`}
-                style={{ height: `${(bar.val / 150) * 100}%` }}
-              >
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border text-[8px] font-mono p-1 rounded absolute -translate-y-8 select-none z-10">
-                  {bar.val}ms
+          ].map((bar, i) => {
+            // Direct height in pixels out of 80px max height container
+            const heightPx = Math.round((bar.val / 150) * 72);
+            return (
+              <div key={i} className="flex-1 flex flex-col justify-end group relative" style={{ height: '100%' }}>
+                <div 
+                  className={`w-full rounded-t-sm transition-all duration-300 ${
+                    bar.val > 100 
+                      ? 'bg-red-500/20 border-t-2 border-red-500 hover:bg-red-500/30' 
+                      : 'bg-accent/25 border-t-2 border-accent hover:bg-accent/35'
+                  }`}
+                  style={{ height: `${heightPx}px` }}
+                >
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border text-[8.5px] font-mono p-1 rounded-md absolute -translate-y-8 left-1/2 -translate-x-1/2 select-none z-10 shadow-sm pointer-events-none whitespace-nowrap">
+                    {bar.val}ms
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </DashboardLayout>
