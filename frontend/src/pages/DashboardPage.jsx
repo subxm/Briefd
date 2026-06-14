@@ -10,20 +10,23 @@ import Briefing from '../components/Briefing';
 import DashboardLayout from '../components/DashboardLayout';
 
 const reframeErrorMessage = (rawError) => {
-  if (!rawError) return 'An unknown error occurred.';
+  if (!rawError) return 'An unexpected error occurred during research. Please try again.';
   const str = String(rawError);
   
-  if (str.includes('503') || str.includes('UNAVAILABLE') || str.includes('high demand')) {
-    return 'The AI research agent is currently experiencing high demand. Spikes in traffic are usually temporary—please try again in a few seconds.';
+  if (str.includes('503') || str.includes('UNAVAILABLE') || str.includes('high demand') || str.includes('temporary')) {
+    return 'The AI research service is currently experiencing high demand. This is usually temporary. Please wait a few seconds and click Retry to resume your scan.';
   }
-  if (str.includes('quota') || str.includes('limit') || str.includes('ResourceExhausted')) {
-    return 'API quota limit reached. Gemini API limits are currently exhausted. Please wait a minute before running another scan.';
+  if (str.includes('quota') || str.includes('limit') || str.includes('ResourceExhausted') || str.includes('exhausted')) {
+    return 'The API quota limit has been reached. Gemini request limits are currently exhausted. Please wait a minute before running another scan.';
   }
-  if (str.includes('403') || str.includes('Forbidden') || str.includes('Daily limit')) {
-    return 'Daily competitive scan limit reached. Please upgrade to the Professional plan to run unlimited scans.';
+  if (str.includes('403') || str.includes('Forbidden') || str.includes('Daily limit') || str.includes('limit reached')) {
+    return 'Daily competitive scan limit reached. Please upgrade to the Professional plan to run unlimited research scans.';
   }
-  if (str.includes('401') || str.includes('Unauthorized') || str.includes('Session expired')) {
+  if (str.includes('401') || str.includes('Unauthorized') || str.includes('Session expired') || str.includes('expired')) {
     return 'Your session has expired. Please log in again to continue.';
+  }
+  if (str.includes('Failed to fetch') || str.includes('NetworkError') || str.includes('network')) {
+    return 'Connection lost. Please check your internet connection or backend server status and try again.';
   }
   
   let cleaned = str;
@@ -304,28 +307,61 @@ export default function DashboardPage() {
                 
                  {/* Error messaging */}
                  {errorMsg && (
-                   <div className="p-3.5 bg-red-500/5 border border-red-500/20 rounded-xl flex items-start gap-3 text-red-900 dark:text-red-400 text-[12px] font-body text-left">
-                     <AlertCircle className="h-4.5 w-4.5 shrink-0 text-red-500 mt-0.5" />
-                     <div>
-                       <p className="font-bold text-red-700 dark:text-red-300">Analysis Failed</p>
-                       <p className="mt-1 leading-relaxed text-muted-foreground">{reframeErrorMessage(errorMsg)}</p>
+                   <div className="p-4 bg-red-500/[0.03] border border-red-500/15 rounded-xl flex items-start gap-3.5 text-[12px] font-body text-left shadow-sm w-full animate-in fade-in duration-300">
+                     <div className="p-1.5 rounded-lg bg-red-500/10 text-red-500 shrink-0 mt-0.5">
+                       <AlertCircle className="h-4 w-4" />
+                     </div>
+                     <div className="flex-1">
+                       <p className="font-semibold text-red-700 dark:text-red-400 tracking-tight">Research Stream Interrupted</p>
+                       <p className="mt-1 text-muted-foreground leading-relaxed">
+                         {reframeErrorMessage(errorMsg)}
+                       </p>
+                       
+                       <details className="mt-2 text-[10px] text-muted-foreground/60 cursor-pointer select-none">
+                         <summary className="hover:text-muted-foreground transition-colors font-medium outline-none">Technical details</summary>
+                         <pre className="mt-1.5 p-2 bg-secondary/50 rounded-md border border-border/40 overflow-x-auto font-mono text-[9px] select-text whitespace-pre-wrap leading-normal">
+                           {String(errorMsg)}
+                         </pre>
+                       </details>
+
+                       <div className="mt-3.5 flex items-center gap-4">
+                         <button
+                           onClick={() => handleResearchSubmit(companyName)}
+                           className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/15 text-red-700 dark:text-red-300 rounded-lg font-semibold transition-colors cursor-pointer text-[10.5px]"
+                         >
+                           Retry Scan
+                         </button>
+                         <button
+                           onClick={handleReset}
+                           className="text-muted-foreground hover:text-foreground transition-colors font-medium text-[10.5px] cursor-pointer"
+                         >
+                           Clear Search
+                         </button>
+                       </div>
                      </div>
                    </div>
                  )}
  
                  {/* Loading state message if briefing hasn't started */}
                  {isLoading && !briefingText && !errorMsg && (
-                   <div className="flex flex-col items-center justify-center py-12 text-center select-none text-muted-foreground">
-                     <div className="relative flex items-center justify-center h-10 w-10 mb-3.5">
-                       {/* Outer track circle */}
-                       <div className="absolute inset-0 rounded-full border-2 border-accent/20"></div>
-                       {/* Spinning indicator arc */}
-                       <div className="absolute inset-0 rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
-                       {/* Pulsing center icon */}
-                       <Sparkles className="h-4 w-4 text-accent animate-pulse" />
+                   <div className="flex flex-col items-center justify-center py-16 text-center select-none text-muted-foreground w-full animate-in fade-in duration-300">
+                     <div className="relative flex items-center justify-center w-16 h-16 mb-5">
+                       {/* Ambient pulsing aura */}
+                       <div className="absolute inset-0 rounded-full bg-accent/10 blur-md animate-pulse" />
+                       
+                       {/* Outer rotating ring */}
+                       <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-accent border-r-accent/30 animate-spin" style={{ animationDuration: '1.2s' }} />
+                       
+                       {/* Inner counter-rotating ring */}
+                       <div className="absolute inset-1.5 rounded-full border-2 border-transparent border-b-accent border-l-accent/20 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
+                       
+                       {/* Central pulsing decorative dot */}
+                       <div className="absolute inset-[13px] rounded-full bg-background border border-border/80 flex items-center justify-center shadow-sm">
+                         <Sparkles className="h-3.5 w-3.5 text-accent animate-pulse" />
+                       </div>
                      </div>
-                     <p className="text-[12px] font-medium text-foreground">Gathering information from search indices...</p>
-                     <p className="mt-1 text-[10px] text-muted-foreground/60 max-w-xs">
+                     <p className="text-[12.5px] font-semibold text-foreground tracking-tight">Gathering information from search indices...</p>
+                     <p className="mt-1.5 text-[10.5px] text-muted-foreground/75 max-w-[280px] leading-relaxed">
                        Our agents are currently scanning the web. This can take up to 30-45 seconds.
                      </p>
                    </div>

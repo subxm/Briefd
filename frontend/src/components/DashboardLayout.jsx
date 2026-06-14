@@ -30,8 +30,12 @@ export default function DashboardLayout({ children }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchInputRef = useRef(null);
+  const [isMac, setIsMac] = useState(true);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.platform) {
+      setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0);
+    }
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
@@ -110,7 +114,7 @@ export default function DashboardLayout({ children }) {
             className="flex-1 bg-transparent border-0 outline-none text-foreground placeholder-muted-foreground/60 w-full text-[11px] focus:ring-0 p-0"
           />
           {!searchQuery && (
-            <kbd className="text-[9px] bg-background border border-border px-1 rounded text-muted-foreground/50 font-mono select-none">⌘K</kbd>
+            <kbd className="text-[9px] bg-background border border-border px-1 rounded text-muted-foreground/50 font-mono select-none">{isMac ? '⌘K' : 'Ctrl+K'}</kbd>
           )}
 
           {/* Search Dropdown Panel */}
