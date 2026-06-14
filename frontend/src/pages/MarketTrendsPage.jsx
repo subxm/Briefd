@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, Sparkles, ArrowUpRight, ArrowDownRight, 
-  Loader2, Calendar, DollarSign, Brain, BarChart3
+  Loader2, Calendar, DollarSign, BarChart3
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import DashboardLayout from '../components/DashboardLayout';
@@ -301,21 +301,7 @@ export default function MarketTrendsPage() {
         {isSectorLoading ? (
           /* Concentric Orbital Spinner Loading State */
           <div className="flex-1 flex flex-col items-center justify-center py-20 text-center select-none text-muted-foreground w-full min-h-[400px] animate-in fade-in duration-300">
-            <div className="relative flex items-center justify-center w-16 h-16 mb-5">
-              {/* Ambient pulsing aura */}
-              <div className="absolute inset-0 rounded-full bg-accent/10 blur-md animate-pulse" />
-              
-              {/* Outer rotating ring */}
-              <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-accent border-r-accent/30 animate-spin" style={{ animationDuration: '1.2s' }} />
-              
-              {/* Inner counter-rotating ring */}
-              <div className="absolute inset-1.5 rounded-full border-2 border-transparent border-b-accent border-l-accent/20 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
-              
-              {/* Central pulsing decorative dot */}
-              <div className="absolute inset-[13px] rounded-full bg-background border border-border/80 flex items-center justify-center shadow-sm">
-                <Brain className="h-3.5 w-3.5 text-accent animate-pulse" />
-              </div>
-            </div>
+            <div className="w-10 h-10 border-[3px] border-accent/15 border-t-accent rounded-full animate-spin mb-5" />
             <p className="text-[12.5px] font-semibold text-foreground tracking-tight">Market Positioning Agent scanning indexes...</p>
             <p className="mt-1.5 text-[10.5px] text-muted-foreground/75 max-w-[280px] leading-relaxed">
               Synthesizing global industry releases, venture funding updates, and developer billing endpoints.

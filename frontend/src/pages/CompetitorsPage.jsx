@@ -251,21 +251,7 @@ export default function CompetitorsPage() {
         <div className="space-y-6 max-w-5xl text-left w-full min-h-[450px] flex flex-col">
           {isDataLoading && (
             <div className="flex-1 flex flex-col items-center justify-center py-16 text-center select-none text-muted-foreground w-full animate-in fade-in duration-300">
-              <div className="relative flex items-center justify-center w-16 h-16 mb-5">
-                {/* Ambient pulsing aura */}
-                <div className="absolute inset-0 rounded-full bg-accent/10 blur-md animate-pulse" />
-                
-                {/* Outer rotating ring */}
-                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-accent border-r-accent/30 animate-spin" style={{ animationDuration: '1.2s' }} />
-                
-                {/* Inner counter-rotating ring */}
-                <div className="absolute inset-1.5 rounded-full border-2 border-transparent border-b-accent border-l-accent/20 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
-                
-                {/* Central pulsing decorative dot */}
-                <div className="absolute inset-[13px] rounded-full bg-background border border-border/80 flex items-center justify-center shadow-sm">
-                  <Users className="h-3.5 w-3.5 text-accent animate-pulse" />
-                </div>
-              </div>
+              <div className="w-10 h-10 border-[3px] border-accent/15 border-t-accent rounded-full animate-spin mb-5" />
               <p className="text-[12.5px] font-semibold text-foreground tracking-tight">Extracting competitor intelligence matrix...</p>
               <p className="mt-1.5 text-[10.5px] text-muted-foreground/75 max-w-[280px] leading-relaxed">
                 Analyzing the intel report with Gemini to structure profiles and capabilities.

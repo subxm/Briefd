@@ -223,7 +223,7 @@ export default function DashboardPage() {
     return (
       <div className="h-screen w-screen bg-background flex items-center justify-center font-body">
         <div className="flex flex-col items-center gap-2 text-muted-foreground select-none">
-          <Sparkles className="h-5 w-5 text-accent animate-spin" />
+          <div className="w-8 h-8 border-[2.5px] border-accent/15 border-t-accent rounded-full animate-spin mb-2" />
           <span className="text-[12px] font-medium">Loading session...</span>
         </div>
       </div>
@@ -345,21 +345,7 @@ export default function DashboardPage() {
                  {/* Loading state message if briefing hasn't started */}
                  {isLoading && !briefingText && !errorMsg && (
                    <div className="flex flex-col items-center justify-center py-16 text-center select-none text-muted-foreground w-full animate-in fade-in duration-300">
-                     <div className="relative flex items-center justify-center w-16 h-16 mb-5">
-                       {/* Ambient pulsing aura */}
-                       <div className="absolute inset-0 rounded-full bg-accent/10 blur-md animate-pulse" />
-                       
-                       {/* Outer rotating ring */}
-                       <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-accent border-r-accent/30 animate-spin" style={{ animationDuration: '1.2s' }} />
-                       
-                       {/* Inner counter-rotating ring */}
-                       <div className="absolute inset-1.5 rounded-full border-2 border-transparent border-b-accent border-l-accent/20 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
-                       
-                       {/* Central pulsing decorative dot */}
-                       <div className="absolute inset-[13px] rounded-full bg-background border border-border/80 flex items-center justify-center shadow-sm">
-                         <Sparkles className="h-3.5 w-3.5 text-accent animate-pulse" />
-                       </div>
-                     </div>
+                      <div className="w-10 h-10 border-[3px] border-accent/15 border-t-accent rounded-full animate-spin mb-5" />
                      <p className="text-[12.5px] font-semibold text-foreground tracking-tight">Gathering information from search indices...</p>
                      <p className="mt-1.5 text-[10.5px] text-muted-foreground/75 max-w-[280px] leading-relaxed">
                        Our agents are currently scanning the web. This can take up to 30-45 seconds.
