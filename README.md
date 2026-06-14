@@ -125,6 +125,8 @@ Stores persisted competitive intelligence briefs.
 
 ## Environment Variables
 
+The backend runs strict startup checks validating the environment. If any variable is missing, the server process will exit with code 1.
+
 ### Backend Configuration (`backend/.env`)
 Create a `.env` file inside the `backend` directory:
 ```env
@@ -149,9 +151,21 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_public_key
 ## Setup Instructions
 
 ### 1. Database Migrations
-Run the SQL script located in the project's implementation plan or update files in the Supabase console SQL Editor to initialize the database tables, triggers, and Row Level Security (RLS) policies.
+Run the SQL script located in the project's database settings or update files in the Supabase console SQL Editor to initialize the database tables, triggers, and Row Level Security (RLS) policies.
 
-### 2. Backend Initialization
+### 2. Running with Docker Compose
+If you have Docker and Docker Compose installed locally, you can run the entire system inside container environments:
+
+1. Configure the `backend/.env` and `frontend/.env` files.
+2. Build and start the containers from the repository root:
+   ```bash
+   docker-compose up --build
+   ```
+3. Open `http://localhost:3000` in your browser. The React application is served on port `3000` and proxies queries to the FastAPI backend running on port `8000`.
+
+### 3. Manual Local Installation
+
+#### Backend Initialization
 1. Navigate to the `backend/` folder:
    ```bash
    cd backend
@@ -176,7 +190,7 @@ Run the SQL script located in the project's implementation plan or update files 
    python -m uvicorn main:app --port 8000 --reload
    ```
 
-### 3. Frontend Initialization
+#### Frontend Initialization
 1. Navigate to the `frontend/` folder:
    ```bash
    cd frontend
