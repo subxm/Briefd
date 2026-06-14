@@ -18,6 +18,17 @@ export const AuthProvider = ({ children }) => {
 
   // Function to refresh the profile info from public.profiles
   const refreshUser = async (currentSession = null) => {
+    // 1. Verify session validity against Supabase Auth API to catch invalidated DB sessions
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    if (authError || !authUser) {
+      console.warn("Supabase session is invalid or has expired:", authError);
+      // Purge local storage and clear client state
+      await supabase.auth.signOut().catch(() => {});
+      setUser(null);
+      setToken(null);
+      return;
+    }
+
     const activeSession = currentSession || (await supabase.auth.getSession()).data.session;
     if (!activeSession) {
       setUser(null);
@@ -25,7 +36,6 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    const { user: authUser } = activeSession;
     const jwtToken = activeSession.access_token;
     setToken(jwtToken);
 
