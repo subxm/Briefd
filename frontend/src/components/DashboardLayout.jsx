@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Search, Bell, ChevronDown, Home, CreditCard, 
-  LineChart, Settings, HelpCircle, Activity, Sparkles, LogOut,
+  Search, Bell, ChevronDown, Home, 
+  LineChart, Settings, HelpCircle, Sparkles, LogOut,
   FileText, Users, CheckCircle, Loader2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
