@@ -322,7 +322,7 @@ export default function CompetitorsPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <h4 className="text-[13px] font-bold text-foreground">{competitor.name}</h4>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                          <p className="text-[11px] text-muted-foreground/90 mt-0.5">
                             {competitor.scale} • {competitor.pricing_model}
                           </p>
                         </div>
@@ -342,18 +342,18 @@ export default function CompetitorsPage() {
                       </div>
 
                       {/* Differentiator */}
-                      <div className="text-[10.5px] bg-secondary/40 border border-border/60 rounded px-2.5 py-1.5 italic text-muted-foreground/90">
-                        <span className="font-semibold text-foreground/80 not-italic block mb-0.5 text-[9.5px]">Core Differentiator</span>
+                      <div className="text-[11.5px] bg-secondary/40 border border-border/60 rounded px-2.5 py-1.5 italic text-muted-foreground/95">
+                        <span className="font-semibold text-foreground/80 not-italic block mb-0.5 text-[10px]">Core Differentiator</span>
                         "{competitor.differentiator}"
                       </div>
 
                       {/* Strengths & Weaknesses lists */}
                       <div className="grid grid-cols-2 gap-4 pt-1">
                         <div className="space-y-1.5 text-left">
-                          <h5 className="text-[9.5px] font-semibold text-foreground/80 uppercase tracking-wider">Key Strengths</h5>
+                          <h5 className="text-[10px] font-semibold text-foreground/80 uppercase tracking-wider">Key Strengths</h5>
                           <ul className="space-y-1">
                             {competitor.strengths?.map((str, sIdx) => (
-                              <li key={sIdx} className="text-[10px] text-muted-foreground flex items-start gap-1">
+                              <li key={sIdx} className="text-[11px] text-muted-foreground/95 flex items-start gap-1">
                                 <span className="text-emerald-500 font-bold shrink-0">•</span>
                                 <span className="leading-normal">{str}</span>
                               </li>
@@ -361,10 +361,10 @@ export default function CompetitorsPage() {
                           </ul>
                         </div>
                         <div className="space-y-1.5 text-left">
-                          <h5 className="text-[9.5px] font-semibold text-foreground/80 uppercase tracking-wider">Key Weaknesses</h5>
+                          <h5 className="text-[10px] font-semibold text-foreground/80 uppercase tracking-wider">Key Weaknesses</h5>
                           <ul className="space-y-1">
                             {competitor.weaknesses?.map((weak, wIdx) => (
-                              <li key={wIdx} className="text-[10px] text-muted-foreground flex items-start gap-1">
+                              <li key={wIdx} className="text-[11px] text-muted-foreground/95 flex items-start gap-1">
                                 <span className="text-red-500 font-bold shrink-0">•</span>
                                 <span className="leading-normal">{weak}</span>
                               </li>

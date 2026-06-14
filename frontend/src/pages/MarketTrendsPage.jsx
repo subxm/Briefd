@@ -467,7 +467,7 @@ export default function MarketTrendsPage() {
                       </div>
                       <h4 className="text-[12px] font-bold text-foreground leading-snug">{t.title}</h4>
                     </div>
-                    <p className="text-[10px] text-muted-foreground/90 leading-relaxed mt-2">{t.description}</p>
+                    <p className="text-[11.5px] text-muted-foreground/95 leading-relaxed mt-2">{t.description}</p>
                   </div>
                 ))}
               </div>
@@ -489,7 +489,7 @@ export default function MarketTrendsPage() {
                     <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                     Operational Cost Benchmarking
                   </h5>
-                  <p className="text-muted-foreground/90 leading-relaxed text-[10px]">
+                  <p className="text-muted-foreground/95 leading-relaxed text-[11px] mt-1">
                     Use the <strong>Price Index Curve</strong> to monitor the base wholesale costs of your software stack. If wholesale infrastructure costs are dropping, consider passing savings to customers to win market share, or keep margins high.
                   </p>
                 </div>
@@ -499,7 +499,7 @@ export default function MarketTrendsPage() {
                     <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                     Monetization Alignment
                   </h5>
-                  <p className="text-muted-foreground/90 leading-relaxed text-[10px]">
+                  <p className="text-muted-foreground/95 leading-relaxed text-[11px] mt-1">
                     The <strong>Pricing Distribution</strong> tracks how customers expect to pay. Introducing a hybrid credit draw in a sector dominated by usage-based pricing might differentiate you, but could also increase buyer friction.
                   </p>
                 </div>
@@ -509,7 +509,7 @@ export default function MarketTrendsPage() {
                     <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                     Strategic Pivots
                   </h5>
-                  <p className="text-muted-foreground/90 leading-relaxed text-[10px]">
+                  <p className="text-muted-foreground/95 leading-relaxed text-[11px] mt-1">
                     Use <strong>Detected Movements</strong> to anticipate technological shifts. If a consolidation trend is emerging (+28% multi-modal shift), shift engineering resources to bundlers instead of single-task endpoints.
                   </p>
                 </div>

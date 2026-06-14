@@ -424,7 +424,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
                       <h5 className="text-[11.5px] font-bold text-foreground leading-tight">{agent.name}</h5>
-                      <p className="mt-1.5 text-[10.5px] text-muted-foreground/85 leading-relaxed">{agent.desc}</p>
+                      <p className="mt-1.5 text-[11.5px] text-muted-foreground/95 leading-relaxed">{agent.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -462,7 +462,7 @@ export default function DashboardPage() {
                   className="flex flex-col items-start p-3 bg-secondary/35 border border-border/80 hover:border-slate-350 hover:bg-secondary/60 rounded-xl transition-all cursor-pointer text-left w-full"
                 >
                   <span className="text-[11.5px] font-bold text-foreground">{company.name}</span>
-                  <span className="text-[9.5px] text-muted-foreground mt-0.5">{company.industry}</span>
+                  <span className="text-[10.5px] text-muted-foreground/90 mt-0.5">{company.industry}</span>
                 </button>
               ))}
             </div>
@@ -490,7 +490,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="text-[9px] bg-secondary/50 border border-border/60 p-2 rounded text-muted-foreground leading-normal">
+            <div className="text-[10.5px] bg-secondary/50 border border-border/60 p-2.5 rounded text-muted-foreground/95 leading-normal">
               {user.tier === 'pro' 
                 ? 'Professional plan activated. Priority agent streams and unrestricted PDF/Competitor matrices are ready.'
                 : 'Upgrade to Professional in settings to unlock unlimited research limits, deep competitor tables, and PDF reports.'
