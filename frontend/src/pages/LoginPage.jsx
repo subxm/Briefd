@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { AlertCircle, Sparkles } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const { loginWithGoogle, user } = useAuth();
@@ -80,8 +80,8 @@ export default function LoginPage() {
             className="w-full h-11 bg-background hover:bg-secondary border border-border rounded-[6px] text-xs font-semibold text-foreground transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 shadow-sm hover:scale-[1.01] active:scale-[0.99] hover:border-slate-400"
           >
             {isLoading ? (
-              <span className="flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-accent animate-spin" />
+              <span className="flex items-center gap-2">
+                <span className="h-3.5 w-3.5 border-2 border-accent border-t-transparent rounded-full animate-spin"></span>
                 Connecting...
               </span>
             ) : (
