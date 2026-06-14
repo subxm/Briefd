@@ -248,17 +248,6 @@ export default function DashboardLayout({ children }) {
                 <LineChart className={`h-4 w-4 ${activePath === '/market-trends' ? 'text-accent' : ''}`} />
                 <span>Market Trends</span>
               </button>
-              <button 
-                onClick={() => navigate('/api-status')}
-                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
-                  activePath === '/api-status' 
-                    ? 'bg-secondary text-foreground font-semibold' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
-                }`}
-              >
-                <Activity className={`h-4 w-4 ${activePath === '/api-status' ? 'text-accent' : ''}`} />
-                <span>API Status</span>
-              </button>
             </div>
 
             {/* Briefings History list */}

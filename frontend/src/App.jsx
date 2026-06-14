@@ -8,7 +8,6 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import CompetitorsPage from './pages/CompetitorsPage';
 import MarketTrendsPage from './pages/MarketTrendsPage';
-import ApiStatusPage from './pages/ApiStatusPage';
 import NotificationsPage from './pages/NotificationsPage';
 import SettingsPage from './pages/SettingsPage';
 import PrivacyPage from './pages/PrivacyPage';
@@ -31,7 +30,6 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/competitors" element={<CompetitorsPage />} />
           <Route path="/market-trends" element={<MarketTrendsPage />} />
-          <Route path="/api-status" element={<ApiStatusPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
 
