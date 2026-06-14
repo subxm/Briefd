@@ -472,6 +472,49 @@ export default function MarketTrendsPage() {
                 ))}
               </div>
             </div>
+
+            {/* Educational Guide Section */}
+            <div className="bg-background border border-border rounded-xl p-5 mt-6 text-left shadow-sm space-y-4">
+              <div>
+                <h3 className="text-[12px] font-semibold text-foreground flex items-center gap-1.5">
+                  <Brain className="h-4 w-4 text-accent" />
+                  <span>Market Positioning Playbook</span>
+                </h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">How to translate these trends into strategic advantages for your product.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[11px] pt-1">
+                <div className="space-y-1.5 p-3.5 bg-secondary/25 rounded-lg border border-border/50">
+                  <h5 className="font-bold text-foreground flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    Operational Cost Benchmarking
+                  </h5>
+                  <p className="text-muted-foreground/90 leading-relaxed text-[10px]">
+                    Use the <strong>Price Index Curve</strong> to monitor the base wholesale costs of your software stack. If wholesale infrastructure costs are dropping, consider passing savings to customers to win market share, or keep margins high.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5 p-3.5 bg-secondary/25 rounded-lg border border-border/50">
+                  <h5 className="font-bold text-foreground flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    Monetization Alignment
+                  </h5>
+                  <p className="text-muted-foreground/90 leading-relaxed text-[10px]">
+                    The <strong>Pricing Distribution</strong> tracks how customers expect to pay. Introducing a hybrid credit draw in a sector dominated by usage-based pricing might differentiate you, but could also increase buyer friction.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5 p-3.5 bg-secondary/25 rounded-lg border border-border/50">
+                  <h5 className="font-bold text-foreground flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    Strategic Pivots
+                  </h5>
+                  <p className="text-muted-foreground/90 leading-relaxed text-[10px]">
+                    Use <strong>Detected Movements</strong> to anticipate technological shifts. If a consolidation trend is emerging (+28% multi-modal shift), shift engineering resources to bundlers instead of single-task endpoints.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
