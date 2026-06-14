@@ -417,7 +417,7 @@ async def create_checkout_session(current_user: dict = Depends(get_current_user)
     
     try:
         session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
+            payment_method_types=["upi", "card"],
             line_items=[
                 {
                     "price_data": {
