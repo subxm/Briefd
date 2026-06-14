@@ -9,6 +9,40 @@ import AgentProgress from '../components/AgentProgress';
 import Briefing from '../components/Briefing';
 import DashboardLayout from '../components/DashboardLayout';
 
+const reframeErrorMessage = (rawError) => {
+  if (!rawError) return 'An unknown error occurred.';
+  const str = String(rawError);
+  
+  if (str.includes('503') || str.includes('UNAVAILABLE') || str.includes('high demand')) {
+    return 'The AI research agent is currently experiencing high demand. Spikes in traffic are usually temporary—please try again in a few seconds.';
+  }
+  if (str.includes('quota') || str.includes('limit') || str.includes('ResourceExhausted')) {
+    return 'API quota limit reached. Gemini API limits are currently exhausted. Please wait a minute before running another scan.';
+  }
+  if (str.includes('403') || str.includes('Forbidden') || str.includes('Daily limit')) {
+    return 'Daily competitive scan limit reached. Please upgrade to the Professional plan to run unlimited scans.';
+  }
+  if (str.includes('401') || str.includes('Unauthorized') || str.includes('Session expired')) {
+    return 'Your session has expired. Please log in again to continue.';
+  }
+  
+  let cleaned = str;
+  if (cleaned.startsWith('Error:')) {
+    cleaned = cleaned.substring(6).trim();
+  }
+  
+  if (cleaned.includes('"message":')) {
+    try {
+      const match = cleaned.match(/"message":\s*"([^"]+)"/);
+      if (match && match[1]) {
+        return match[1];
+      }
+    } catch (e) {}
+  }
+  
+  return cleaned;
+};
+
 export default function DashboardPage() {
   const { 
     user, token, loading, refreshUser,
@@ -268,29 +302,34 @@ export default function DashboardPage() {
                   Briefing Outputs
                 </h4>
                 
-                {/* Error messaging */}
-                {errorMsg && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2 text-red-700 text-[12px] font-body">
-                    <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Analysis Failed</p>
-                      <p className="mt-0.5 opacity-90">{errorMsg}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Loading state message if briefing hasn't started */}
-                {isLoading && !briefingText && !errorMsg && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center select-none text-muted-foreground">
-                    <div className="h-6 w-6 rounded-full border border-border flex items-center justify-center animate-pulse">
-                      <Sparkles className="h-3.5 w-3.5 text-accent animate-spin" />
-                    </div>
-                    <p className="mt-3 text-[12px] font-medium text-foreground">Gathering information from search indices...</p>
-                    <p className="mt-1 text-[10px] text-muted-foreground/60 max-w-xs">
-                      Our agents are currently scanning the web. This can take up to 30-45 seconds.
-                    </p>
-                  </div>
-                )}
+                 {/* Error messaging */}
+                 {errorMsg && (
+                   <div className="p-3.5 bg-red-500/5 border border-red-500/20 rounded-xl flex items-start gap-3 text-red-900 dark:text-red-400 text-[12px] font-body text-left">
+                     <AlertCircle className="h-4.5 w-4.5 shrink-0 text-red-500 mt-0.5" />
+                     <div>
+                       <p className="font-bold text-red-700 dark:text-red-300">Analysis Failed</p>
+                       <p className="mt-1 leading-relaxed text-muted-foreground">{reframeErrorMessage(errorMsg)}</p>
+                     </div>
+                   </div>
+                 )}
+ 
+                 {/* Loading state message if briefing hasn't started */}
+                 {isLoading && !briefingText && !errorMsg && (
+                   <div className="flex flex-col items-center justify-center py-12 text-center select-none text-muted-foreground">
+                     <div className="relative flex items-center justify-center h-10 w-10 mb-3.5">
+                       {/* Outer track circle */}
+                       <div className="absolute inset-0 rounded-full border-2 border-accent/20"></div>
+                       {/* Spinning indicator arc */}
+                       <div className="absolute inset-0 rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
+                       {/* Pulsing center icon */}
+                       <Sparkles className="h-4 w-4 text-accent animate-pulse" />
+                     </div>
+                     <p className="text-[12px] font-medium text-foreground">Gathering information from search indices...</p>
+                     <p className="mt-1 text-[10px] text-muted-foreground/60 max-w-xs">
+                       Our agents are currently scanning the web. This can take up to 30-45 seconds.
+                     </p>
+                   </div>
+                 )}
 
                 {/* Stream/Display the briefing report */}
                 {(briefingText || completedAgents.length > 0) && (
