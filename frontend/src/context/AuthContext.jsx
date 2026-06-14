@@ -130,8 +130,8 @@ export const AuthProvider = ({ children }) => {
   const upgradeToPro = async () => {
     if (!token) throw new Error("Unauthorized: No session token found.");
     
-    // Call the backend API securely to toggle the tier
-    const response = await fetch(`${API_BASE_URL}/auth/upgrade`, {
+    // Call the backend API to create a Stripe checkout session
+    const response = await fetch(`${API_BASE_URL}/payments/create-checkout-session`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -142,20 +142,15 @@ export const AuthProvider = ({ children }) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.detail || 'Failed to upgrade to Pro.');
+      throw new Error(data.detail || 'Failed to initiate upgrade payment.');
     }
 
-    if (data.user) {
-      setUser(prev => ({
-        ...prev,
-        tier: data.user.tier,
-        scans_today: data.user.scans_today,
-        total_scans: data.user.total_scans
-      }));
+    if (data.url) {
+      // Redirect user directly to Stripe's secure hosted payment page
+      window.location.href = data.url;
     } else {
-      await refreshUser();
+      throw new Error('No payment redirect URL returned.');
     }
-    return data.user;
   };
 
   const loginWithGoogle = async () => {

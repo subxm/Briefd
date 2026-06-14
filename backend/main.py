@@ -3,13 +3,14 @@ import logging
 import json
 from datetime import datetime
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Header, Depends, Response
+from fastapi import FastAPI, HTTPException, Header, Depends, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pdf_generator import generate_briefing_pdf
 from competitors_extractor import extract_competitors_intelligence
 from pydantic import BaseModel
 import httpx
+import stripe
 
 # Load environment variables from .env
 load_dotenv()
@@ -24,7 +25,8 @@ required_env_vars = {
     "TAVILY_API_KEY": "Required for real-time web search and competitor indexing.",
     "SUPABASE_URL": "Required for database syncing and user profiles.",
     "SUPABASE_ANON_KEY": "Required for client-facing database operations.",
-    "SUPABASE_SERVICE_ROLE_KEY": "Required for backend bypass controls and billing calculations."
+    "SUPABASE_SERVICE_ROLE_KEY": "Required for backend bypass controls and billing calculations.",
+    "STRIPE_API_KEY": "Required for secure Stripe checkout session creations."
 }
 
 missing_vars = []
@@ -48,6 +50,10 @@ if missing_vars:
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+# Stripe API Key Configuration
+stripe.api_key = os.getenv("STRIPE_API_KEY")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 from orchestrator import run_research_pipeline
 
@@ -390,3 +396,114 @@ async def research(request: ResearchRequest, current_user: dict = Depends(get_cu
             "X-Accel-Buffering": "no"
         }
     )
+
+
+# --- STRIPE PAYMENTS ENDPOINTS ---
+
+@app.post("/payments/create-checkout-session")
+async def create_checkout_session(current_user: dict = Depends(get_current_user)):
+    """
+    Creates a Stripe Checkout Session for upgrading to Pro.
+    """
+    user_id = current_user["id"]
+    user_email = current_user["email"]
+    
+    # Get base frontend URL for redirects. Support localhost default or config env.
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": "inr",
+                        "product_data": {
+                            "name": "Briefd Professional Pass",
+                            "description": "Unlock unlimited scans, feature capability matrices, and advanced PDF exports.",
+                        },
+                        "unit_amount": 49900,  # ₹499.00 INR (Stripe takes amount in paise)
+                    },
+                    "quantity": 1,
+                }
+            ],
+            mode="payment",
+            customer_email=user_email,
+            metadata={
+                "user_id": user_id
+            },
+            success_url=f"{frontend_url}/dashboard?payment=success",
+            cancel_url=f"{frontend_url}/dashboard?payment=cancel",
+        )
+        return {"url": session.url}
+    except Exception as e:
+        logger.error(f"Failed to create Stripe checkout session: {e}")
+        raise HTTPException(status_code=500, detail="Failed to initialize checkout session.")
+
+@app.post("/payments/webhook")
+async def stripe_webhook(response: Response, request: Request):
+    """
+    Listens for Stripe webhooks to process user billing tier upgrades.
+    """
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    
+    event = None
+    
+    # 1. Parse and verify signature if WEBHOOK_SECRET is configured
+    if STRIPE_WEBHOOK_SECRET:
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, STRIPE_WEBHOOK_SECRET
+            )
+        except stripe.error.SignatureVerificationError as e:
+            logger.error(f"Invalid webhook signature: {e}")
+            raise HTTPException(status_code=400, detail="Invalid webhook signature.")
+        except Exception as e:
+            logger.error(f"Webhook parsing error: {e}")
+            raise HTTPException(status_code=400, detail="Webhook parsing error.")
+    else:
+        # Fallback for simple local testing if secret is not set
+        logger.warning("STRIPE_WEBHOOK_SECRET is missing. Skipping signature validation.")
+        try:
+            event = stripe.Event.construct_from(
+                json.loads(payload.decode("utf-8")), stripe.api_key
+            )
+        except Exception as e:
+            logger.error(f"Failed to parse unverified webhook body: {e}")
+            raise HTTPException(status_code=400, detail="Invalid payload format.")
+            
+    # 2. Process checkout session completed
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        user_id = session.get("metadata", {}).get("user_id")
+        
+        if not user_id:
+            logger.error("Stripe Checkout event is missing user_id in metadata.")
+            raise HTTPException(status_code=400, detail="Missing user_id in metadata.")
+            
+        logger.info(f"Processing Pro Upgrade payment for user: {user_id}")
+        
+        # 3. Upgrade user tier to 'pro' on Supabase
+        async with httpx.AsyncClient() as client:
+            try:
+                db_response = await client.patch(
+                    f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{user_id}",
+                    headers={
+                        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "tier": "pro"
+                    }
+                )
+                if db_response.status_code not in [200, 201, 204]:
+                    logger.error(f"Failed to patch user profile to Pro: {db_response.text}")
+                    raise HTTPException(status_code=500, detail="Failed to upgrade user profile in database.")
+                logger.info(f"Successfully upgraded user {user_id} to Pro via Stripe payment.")
+            except Exception as e:
+                logger.error(f"Failed to connect to database for upgrade: {e}")
+                raise HTTPException(status_code=500, detail="Failed to connect to database.")
+                
+    return {"status": "success"}

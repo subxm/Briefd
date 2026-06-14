@@ -64,6 +64,21 @@ export default function DashboardPage() {
     }
   }, [user, loading]);
 
+  // Handle payment redirect URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment');
+    
+    if (paymentStatus === 'success') {
+      navigate('/dashboard', { replace: true });
+      refreshUser();
+      alert("Payment successful! Welcome to Briefd Professional.");
+    } else if (paymentStatus === 'cancel') {
+      navigate('/dashboard', { replace: true });
+      alert("Upgrade checkout cancelled.");
+    }
+  }, [navigate, refreshUser]);
+
   // Local research and scan states
   const [isLoading, setIsLoading] = useState(false);
   const [activeAgent, setActiveAgent] = useState(null);
