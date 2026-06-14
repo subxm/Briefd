@@ -133,14 +133,18 @@ export const AuthProvider = ({ children }) => {
   };
 
   const upgradeToPro = async () => {
-    if (!token) throw new Error("Unauthorized: No session token found.");
+    // Dynamically retrieve the freshest session to automatically handle auto-refresh tokens
+    const { data: { session } } = await supabase.auth.getSession();
+    const activeToken = session?.access_token || token;
+
+    if (!activeToken) throw new Error("Unauthorized: No session token found.");
     
     // Call the backend API to create a Stripe checkout session
     const response = await fetch(`${API_BASE_URL}/payments/create-checkout-session`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${activeToken}`
       }
     });
 

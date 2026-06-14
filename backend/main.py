@@ -101,6 +101,10 @@ async def get_current_user(authorization: str = Header(None)):
             raise HTTPException(status_code=500, detail="Failed to connect to authentication server.")
             
         if auth_response.status_code != 200:
+            logger.error(
+                f"Supabase auth token verification failed on endpoint: {SUPABASE_URL}/auth/v1/user. "
+                f"Status code: {auth_response.status_code}. Response: {auth_response.text}"
+            )
             raise HTTPException(status_code=401, detail="Unauthorized. Invalid session token.")
             
         supabase_user = auth_response.json()
