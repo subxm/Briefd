@@ -234,6 +234,18 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
+  // Handle post-login checkout redirect for landing/pricing pages
+  useEffect(() => {
+    if (!loading && user) {
+      if (typeof window !== 'undefined' && sessionStorage.getItem('pending_checkout_after_login') === 'true') {
+        sessionStorage.removeItem('pending_checkout_after_login');
+        upgradeToPro().catch((err) => {
+          console.error("Failed to redirect to Stripe checkout:", err);
+        });
+      }
+    }
+  }, [user, loading]);
+
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);

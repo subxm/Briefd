@@ -4,7 +4,7 @@ import { Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function PricingPage() {
-  const { user } = useAuth();
+  const { user, upgradeToPro } = useAuth();
   const navigate = useNavigate();
   const [isAnnual, setIsAnnual] = useState(false);
 
@@ -41,10 +41,28 @@ export default function PricingPage() {
   ];
 
   const handleCTA = (planName) => {
-    if (user) {
-      navigate('/dashboard');
+    if (planName === 'Professional') {
+      if (user) {
+        if (user.tier === 'pro') {
+          navigate('/dashboard');
+        } else {
+          upgradeToPro().catch((err) => {
+            console.error("Failed to upgrade:", err);
+            navigate('/dashboard');
+          });
+        }
+      } else {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('pending_checkout_after_login', 'true');
+        }
+        navigate('/login');
+      }
     } else {
-      navigate('/register');
+      if (user) {
+        navigate('/dashboard');
+      } else {
+        navigate('/login');
+      }
     }
   };
 

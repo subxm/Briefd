@@ -10,7 +10,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 export default function LandingPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, upgradeToPro } = useAuth();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
@@ -92,11 +92,29 @@ export default function LandingPage() {
     };
   }, []);
 
-  const handleCTA = () => {
-    if (user) {
-      navigate('/dashboard');
+  const handleCTA = (planName) => {
+    if (planName === 'Professional') {
+      if (user) {
+        if (user.tier === 'pro') {
+          navigate('/dashboard');
+        } else {
+          upgradeToPro().catch((err) => {
+            console.error("Failed to upgrade:", err);
+            navigate('/dashboard');
+          });
+        }
+      } else {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('pending_checkout_after_login', 'true');
+        }
+        navigate('/login');
+      }
     } else {
-      navigate('/register');
+      if (user) {
+        navigate('/dashboard');
+      } else {
+        navigate('/login');
+      }
     }
   };
 
@@ -610,7 +628,7 @@ export default function LandingPage() {
                 </div>
 
                 <button 
-                  onClick={handleCTA}
+                  onClick={() => handleCTA(plan.name)}
                   className={`mt-6 w-full py-2.5 rounded-[6px] text-xs font-medium transition-all duration-150 cursor-pointer ${
                     plan.popular 
                       ? 'bg-accent text-accent-foreground hover:bg-accent/90 shadow' 
