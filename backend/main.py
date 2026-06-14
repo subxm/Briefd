@@ -18,16 +18,36 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Verify API Keys are loaded
-if not os.getenv("GEMINI_API_KEY") or not os.getenv("TAVILY_API_KEY"):
-    logger.warning("Warning: GEMINI_API_KEY or TAVILY_API_KEY is missing from environment variables.")
+# Verify API Keys and Supabase configs are loaded (Exit strictly if missing)
+required_env_vars = {
+    "GEMINI_API_KEY": "Required for running the Gemini LLM agent intelligence chain.",
+    "TAVILY_API_KEY": "Required for real-time web search and competitor indexing.",
+    "SUPABASE_URL": "Required for database syncing and user profiles.",
+    "SUPABASE_ANON_KEY": "Required for client-facing database operations.",
+    "SUPABASE_SERVICE_ROLE_KEY": "Required for backend bypass controls and billing calculations."
+}
+
+missing_vars = []
+for var, desc in required_env_vars.items():
+    val = os.getenv(var)
+    if not val or not val.strip():
+        missing_vars.append(f"  - {var}: {desc}")
+
+if missing_vars:
+    print("\n" + "="*80)
+    print("CRITICAL RUNTIME ERROR: Missing Required Environment Configuration")
+    print("="*80)
+    print("The backend server could not start because the following variables are missing:\n")
+    for item in missing_vars:
+        print(item)
+    print("\nPlease create a .env file inside the backend directory with these values.")
+    print("="*80 + "\n")
+    import sys
+    sys.exit(1)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-if not SUPABASE_URL or not SUPABASE_ANON_KEY or not SUPABASE_SERVICE_ROLE_KEY:
-    logger.error("Error: Supabase environment variables (URL, ANON_KEY, SERVICE_ROLE_KEY) are missing.")
 
 from orchestrator import run_research_pipeline
 
