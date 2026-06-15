@@ -99,6 +99,12 @@ export default function DashboardPage() {
   // Custom limit modal and upgrade processing states
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [showPdfModal, setShowPdfModal] = useState(false);
+  const [pdfModalContent, setPdfModalContent] = useState({
+    title: "",
+    description: "",
+    isUpgrade: false
+  });
 
   const handleUpgradeClick = async () => {
     setIsUpgrading(true);
@@ -123,7 +129,22 @@ export default function DashboardPage() {
 
   const handleExportClick = async () => {
     if (!activeBriefingId) {
-      alert("No active briefing found to export. Please select a historical briefing or run a new search.");
+      setPdfModalContent({
+        title: "No Briefing Selected",
+        description: "No active briefing found to export. Please select a historical briefing or run a new search.",
+        isUpgrade: false
+      });
+      setShowPdfModal(true);
+      return;
+    }
+
+    if (user.tier !== 'pro') {
+      setPdfModalContent({
+        title: "Professional Feature",
+        description: "PDF Export is a premium feature. Please upgrade to the Professional plan to download reports.",
+        isUpgrade: true
+      });
+      setShowPdfModal(true);
       return;
     }
     
@@ -150,7 +171,12 @@ export default function DashboardPage() {
       window.URL.revokeObjectURL(url);
       a.remove();
     } catch (err) {
-      alert(err.message || "Failed to export PDF.");
+      setPdfModalContent({
+        title: "Export Failed",
+        description: err.message || "Failed to export PDF.",
+        isUpgrade: false
+      });
+      setShowPdfModal(true);
     } finally {
       setIsExporting(false);
     }
@@ -388,6 +414,58 @@ export default function DashboardPage() {
                 >
                   Cancel
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* PDF Export Upgrade / Message Modal */}
+      <AnimatePresence>
+        {showPdfModal && (
+          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm bg-background border border-border rounded-xl p-6 shadow-dashboard text-left"
+            >
+              <div className="h-10 w-10 bg-accent/15 text-accent rounded-full flex items-center justify-center mb-4">
+                <Sparkles className="h-5 w-5 animate-pulse" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground tracking-tight">{pdfModalContent.title}</h3>
+              <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed font-body">
+                {pdfModalContent.description}
+              </p>
+              <div className="mt-6 flex flex-col gap-2">
+                {pdfModalContent.isUpgrade ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowPdfModal(false);
+                        handleUpgradeClick();
+                      }}
+                      disabled={isUpgrading}
+                      className="w-full h-10 bg-accent text-accent-foreground hover:bg-accent/90 rounded-[6px] text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      <span>{isUpgrading ? 'Upgrading...' : 'Upgrade to Professional (₹499)'}</span>
+                    </button>
+                    <button
+                      onClick={() => setShowPdfModal(false)}
+                      className="w-full h-10 bg-secondary text-foreground hover:bg-secondary/80 rounded-[6px] text-xs font-medium transition-all flex items-center justify-center cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setShowPdfModal(false)}
+                    className="w-full h-10 bg-secondary text-foreground hover:bg-secondary/80 rounded-[6px] text-xs font-medium transition-all flex items-center justify-center cursor-pointer"
+                  >
+                    Dismiss
+                  </button>
+                )}
               </div>
             </motion.div>
           </div>
