@@ -502,6 +502,7 @@ class ApprovePaymentRequest(BaseModel):
 async def admin_approve_payment(payload: ApprovePaymentRequest, current_user: dict = Depends(get_current_user)):
     """
     Approves a payment and upgrades the target user to 'pro' (Admin Only).
+    Supports lazy profile creation via upsert if user profile is missing.
     """
     user_email = current_user["email"]
     if user_email.lower() != ADMIN_EMAIL.lower():
@@ -514,13 +515,14 @@ async def admin_approve_payment(payload: ApprovePaymentRequest, current_user: di
     
     async with httpx.AsyncClient() as client:
         try:
-            # 1. Update payment status to 'approved'
+            # 1. Update payment status to 'approved' and return representation to get the email
             pay_response = await client.patch(
                 f"{SUPABASE_URL}/rest/v1/upi_payments?id=eq.{payment_id}",
                 headers={
                     "apikey": SUPABASE_SERVICE_ROLE_KEY,
                     "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Prefer": "return=representation"
                 },
                 json={
                     "status": "approved"
@@ -530,25 +532,38 @@ async def admin_approve_payment(payload: ApprovePaymentRequest, current_user: di
                 logger.error(f"Failed to update payment status: {pay_response.text}")
                 raise HTTPException(status_code=500, detail="Failed to update transaction status.")
                 
-            # 2. Upgrade user to 'pro' in profiles table
-            profile_response = await client.patch(
-                f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{target_user_id}",
+            # Parse user email from updated transaction record
+            records = pay_response.json()
+            if not records:
+                raise HTTPException(status_code=404, detail="Transaction record not found.")
+            target_user_email = records[0]["email"]
+            target_user_name = target_user_email.split("@")[0]
+
+            # 2. Upgrade user to 'pro' using UPSERT (Post request with resolution=merge-duplicates)
+            profile_response = await client.post(
+                f"{SUPABASE_URL}/rest/v1/profiles?on_conflict=id",
                 headers={
                     "apikey": SUPABASE_SERVICE_ROLE_KEY,
                     "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Prefer": "resolution=merge-duplicates"
                 },
                 json={
+                    "id": target_user_id,
+                    "email": target_user_email,
+                    "name": target_user_name,
                     "tier": "pro"
                 }
             )
             if profile_response.status_code not in [200, 201, 204]:
-                logger.error(f"Failed to upgrade user profile: {profile_response.text}")
+                logger.error(f"Failed to upsert user profile: {profile_response.text}")
                 raise HTTPException(status_code=500, detail="Failed to update user profile in database.")
                 
-            logger.info(f"Admin successfully approved Pro access for user ID: {target_user_id}")
+            logger.info(f"Admin successfully approved Pro access and upserted user profile ID: {target_user_id}")
             return {"status": "success", "message": "Successfully approved Pro tier and upgraded user."}
             
+        except HTTPException as he:
+            raise he
         except Exception as e:
             logger.error(f"Failed to connect to database for approval: {e}")
             raise HTTPException(status_code=500, detail="Failed to connect to database.")
@@ -573,13 +588,14 @@ async def admin_revoke_payment(payload: RevokePaymentRequest, current_user: dict
     
     async with httpx.AsyncClient() as client:
         try:
-            # 1. Update payment status to 'revoked'
+            # 1. Update payment status to 'revoked' and return representation
             pay_response = await client.patch(
                 f"{SUPABASE_URL}/rest/v1/upi_payments?id=eq.{payment_id}",
                 headers={
                     "apikey": SUPABASE_SERVICE_ROLE_KEY,
                     "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Prefer": "return=representation"
                 },
                 json={
                     "status": "revoked"
@@ -589,15 +605,25 @@ async def admin_revoke_payment(payload: RevokePaymentRequest, current_user: dict
                 logger.error(f"Failed to update payment status: {pay_response.text}")
                 raise HTTPException(status_code=500, detail="Failed to update transaction status.")
                 
-            # 2. Downgrade user to 'free' in profiles table
-            profile_response = await client.patch(
-                f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{target_user_id}",
+            records = pay_response.json()
+            if not records:
+                raise HTTPException(status_code=404, detail="Transaction record not found.")
+            target_user_email = records[0]["email"]
+            target_user_name = target_user_email.split("@")[0]
+
+            # 2. Downgrade user to 'free' in profiles table using UPSERT
+            profile_response = await client.post(
+                f"{SUPABASE_URL}/rest/v1/profiles?on_conflict=id",
                 headers={
                     "apikey": SUPABASE_SERVICE_ROLE_KEY,
                     "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "Prefer": "resolution=merge-duplicates"
                 },
                 json={
+                    "id": target_user_id,
+                    "email": target_user_email,
+                    "name": target_user_name,
                     "tier": "free"
                 }
             )
@@ -605,9 +631,11 @@ async def admin_revoke_payment(payload: RevokePaymentRequest, current_user: dict
                 logger.error(f"Failed to downgrade user profile: {profile_response.text}")
                 raise HTTPException(status_code=500, detail="Failed to update user profile in database.")
                 
-            logger.info(f"Admin successfully revoked Pro access for user ID: {target_user_id}")
+            logger.info(f"Admin successfully revoked Pro access and updated user profile ID: {target_user_id}")
             return {"status": "success", "message": "Successfully revoked Pro tier and downgraded user."}
             
+        except HTTPException as he:
+            raise he
         except Exception as e:
             logger.error(f"Failed to connect to database for revocation: {e}")
             raise HTTPException(status_code=500, detail="Failed to connect to database.")

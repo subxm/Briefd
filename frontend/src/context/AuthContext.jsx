@@ -49,6 +49,35 @@ export const AuthProvider = ({ children }) => {
 
       if (error) {
         console.error("Error fetching user profile:", error);
+        
+        // Lazy-create profile row if missing (PGRST116 means row not found)
+        if (error.code === 'PGRST116' || error.message?.includes('0 rows')) {
+          try {
+            const defaultProfile = {
+              id: authUser.id,
+              email: authUser.email,
+              name: authUser.user_metadata?.name || 'User',
+              tier: 'free',
+              scans_today: 0,
+              last_scan_date: '',
+              total_scans: 0
+            };
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert([defaultProfile]);
+              
+            if (!insertError) {
+              console.log("Successfully created missing profile in Supabase profiles table.");
+              setUser(defaultProfile);
+              return;
+            } else {
+              console.error("Failed to insert missing profile:", insertError);
+            }
+          } catch (insertErr) {
+            console.error("Error inserting missing profile:", insertErr);
+          }
+        }
+
         // Fallback to auth details if profile is not found or fails
         const isPendingPro = typeof window !== 'undefined' && sessionStorage.getItem('pending_pro_upgrade') === 'true';
         setUser({
@@ -61,15 +90,14 @@ export const AuthProvider = ({ children }) => {
           total_scans: 0
         });
       } else {
-        if (profile.tier === 'pro' && typeof window !== 'undefined') {
+        if (typeof window !== 'undefined') {
           sessionStorage.removeItem('pending_pro_upgrade');
         }
-        const isPendingPro = typeof window !== 'undefined' && sessionStorage.getItem('pending_pro_upgrade') === 'true';
         setUser({
           id: authUser.id,
           email: authUser.email,
           name: profile.name || authUser.user_metadata?.name || 'User',
-          tier: (profile.tier === 'pro' || isPendingPro) ? 'pro' : (profile.tier || 'free'),
+          tier: profile.tier || 'free',
           scans_today: profile.scans_today || 0,
           last_scan_date: profile.last_scan_date || '',
           total_scans: profile.total_scans || 0
