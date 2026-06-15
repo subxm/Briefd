@@ -121,6 +121,19 @@ Stores persisted competitive intelligence briefs.
 | `briefing_text` | text | Not Null | Persisted markdown report content |
 | `created_at` | timestamp | Default `now()` | Generation timestamp |
 
+### UPI Payments Table (`public.upi_payments`)
+Logs direct P2P UPI payment reference UTR submissions for Pro-tier verification.
+
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | uuid | Primary Key, Default `gen_random_uuid()` | Unique transaction ID |
+| `user_id` | uuid | References `auth.users`, Not Null | Submitting user's ID |
+| `email` | text | Not Null | Submitting user's email |
+| `utr` | text | Not Null, Unique | 12-digit UPI transaction reference |
+| `amount` | integer | Default `499` | Transaction price in INR |
+| `status` | text | Default `'pending'` | Review status: `'pending'`, `'approved'`, or `'revoked'` |
+| `created_at` | timestamp | Default `now()` | Submission timestamp |
+
 ---
 
 ## Environment Variables
@@ -137,6 +150,10 @@ TAVILY_API_KEY=your_tavily_api_key_here
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_ANON_KEY=your_supabase_anon_public_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_secret_key
+
+# UPI P2P Payment Configurations
+UPI_ID=your_gpay_upi_id_here
+ADMIN_EMAIL=admin_account_email_here
 ```
 
 ### Frontend Configuration (`frontend/.env`)
@@ -242,6 +259,9 @@ All tables inside the Supabase database are secured with Row Level Security (RLS
 2. **Briefings Table**:
    * Users can only select or insert briefings that match their UUID.
    * `auth.uid() = user_id` controls read and write access.
+3. **UPI Payments Table**:
+   * Users can only select their own payment submissions.
+   * `auth.uid() = user_id` controls read and write access.
 
 ---
 
@@ -255,6 +275,10 @@ All tables inside the Supabase database are secured with Row Level Security (RLS
 | `GET /briefings` | GET | Yes (Bearer) | Lists all briefings created by the logged-in user |
 | `GET /briefings/{id}` | GET | Yes (Bearer) | Retrieves full briefing details for a specific ID |
 | `POST /research` | POST | Yes (Bearer) | Checks credit limits, runs agents, and streams SSE report |
+| `POST /payments/upi-submit` | POST | Yes (Bearer) | Submits a 12-digit UTR for direct P2P UPI verification |
+| `GET /admin/payments` | GET | Yes (Admin Bearer) | Lists all UPI payment submissions for auditing |
+| `POST /admin/payments/approve` | POST | Yes (Admin Bearer) | Approves a transaction and upserts the profile to 'pro' |
+| `POST /admin/payments/revoke` | POST | Yes (Admin Bearer) | Revokes a transaction and downgrades the profile to 'free' |
 
 
 
