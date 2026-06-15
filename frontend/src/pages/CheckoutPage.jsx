@@ -12,7 +12,6 @@ export default function CheckoutPage() {
   const { user, token, loading, refreshUser, setUser } = useAuth();
   const navigate = useNavigate();
   
-  const [upiId, setUpiId] = useState('shubhamnegissn14-1@okhdfcbank');
   const [utr, setUtr] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -27,27 +26,6 @@ export default function CheckoutPage() {
       navigate('/dashboard');
     }
   }, [user, token, loading, navigate]);
-
-  // Fetch UPI ID from backend payment configuration
-  useEffect(() => {
-    if (!token) return;
-    fetch(`${API_BASE_URL}/payments/config`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.upi_id) {
-          setUpiId(data.upi_id);
-        }
-      })
-      .catch(err => console.error("Failed to load payment config:", err));
-  }, [token]);
-
-  // Generate dynamic QR Code payload URL with pre-set amount (₹499)
-  const qrData = encodeURIComponent(`upi://pay?pa=${upiId}&pn=Shubham%20Singh%20Negi&am=499&cu=INR&tn=Briefd%20Pro%20Upgrade`);
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${qrData}&color=111827&margin=10`;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -212,7 +190,7 @@ export default function CheckoutPage() {
               <div className="mt-5 flex flex-col items-center gap-3">
                 <div className="bg-white p-2 rounded-xl border border-border/80 shadow-md">
                   <img 
-                    src={qrCodeUrl} 
+                    src="/upi_qr_cropped.png" 
                     alt="Scan UPI QR Code" 
                     className="h-[170px] w-[170px] object-contain select-none animate-none"
                     draggable="false"
