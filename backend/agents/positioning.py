@@ -1,5 +1,5 @@
 import os
-from google import genai
+from groq import Groq
 from tools.search import search_tavily
 
 def run_market_positioning_analyst(company_name: str, company_profile: str, competitor_profiles: str) -> str:
@@ -15,9 +15,9 @@ def run_market_positioning_analyst(company_name: str, company_profile: str, comp
     Returns:
         Structured market positioning analysis.
     """
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    if not gemini_key:
-        raise ValueError("GEMINI_API_KEY not found in environment variables.")
+    groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key:
+        raise ValueError("GROQ_API_KEY not found in environment variables.")
         
     # 1. Search Tavily for market trends and size in the company's domain
     query = f"{company_name} industry market size growth rate trends future outlook"
@@ -26,7 +26,7 @@ def run_market_positioning_analyst(company_name: str, company_profile: str, comp
     except Exception as e:
         raise RuntimeError(f"Market Positioning Analyst failed to search Tavily: {str(e)}")
         
-    # 2. Call Gemini 2.5 Flash using the google-genai SDK
+    # 2. Call Groq Llama 3.3 70B
     prompt = f"""
 You are a senior market strategist. Your job is to analyze the market positioning of the target company relative to its competitors and general industry trends.
 
@@ -51,11 +51,15 @@ Format your response in structured markdown. Be analytical, critical, and strate
 """
     
     try:
-        client = genai.Client(api_key=gemini_key)
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
+        client = Groq(api_key=groq_key)
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are a senior market strategist."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2
         )
-        return response.text
+        return response.choices[0].message.content
     except Exception as e:
-        raise RuntimeError(f"Market Positioning Analyst failed to analyze market with Gemini: {str(e)}")
+        raise RuntimeError(f"Market Positioning Analyst failed to analyze market with Groq: {str(e)}")

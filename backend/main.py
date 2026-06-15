@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Verify API Keys and Supabase configs are loaded (Exit strictly if missing)
 required_env_vars = {
-    "GEMINI_API_KEY": "Required for running the Gemini LLM agent intelligence chain.",
+    "GROQ_API_KEY": "Required for running the Groq LLM agent intelligence chain.",
     "TAVILY_API_KEY": "Required for real-time web search and competitor indexing.",
     "SUPABASE_URL": "Required for database syncing and user profiles.",
     "SUPABASE_ANON_KEY": "Required for client-facing database operations.",

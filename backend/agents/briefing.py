@@ -1,5 +1,5 @@
 import os
-from google import genai
+from groq import Groq
 
 def run_briefing_writer(company_name: str, company_profile: str, competitor_profiles: str, positioning_analysis: str) -> str:
     """
@@ -16,9 +16,9 @@ def run_briefing_writer(company_name: str, company_profile: str, competitor_prof
     Returns:
         The final competitive intelligence briefing in the exact specified markdown structure.
     """
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    if not gemini_key:
-        raise ValueError("GEMINI_API_KEY not found in environment variables.")
+    groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key:
+        raise ValueError("GROQ_API_KEY not found in environment variables.")
         
     prompt = f"""
 You are a elite executive intelligence writer. Your task is to synthesize the three research reports below into a final, client-ready Competitive Intelligence Briefing for the target company: {company_name}.
@@ -58,11 +58,15 @@ Write in a professional, objective, high-density business style.
 """
     
     try:
-        client = genai.Client(api_key=gemini_key)
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
+        client = Groq(api_key=groq_key)
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are an elite executive intelligence writer."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2
         )
-        return response.text
+        return response.choices[0].message.content
     except Exception as e:
-        raise RuntimeError(f"Briefing Writer failed to generate final briefing with Gemini: {str(e)}")
+        raise RuntimeError(f"Briefing Writer failed to generate final briefing with Groq: {str(e)}")

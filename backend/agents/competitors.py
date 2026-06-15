@@ -1,5 +1,5 @@
 import os
-from google import genai
+from groq import Groq
 from tools.search import search_tavily
 
 def run_competitor_finder(company_name: str, company_profile: str) -> str:
@@ -14,9 +14,9 @@ def run_competitor_finder(company_name: str, company_profile: str) -> str:
     Returns:
         Structured profiles of the top 3-5 competitors.
     """
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    if not gemini_key:
-        raise ValueError("GEMINI_API_KEY not found in environment variables.")
+    groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key:
+        raise ValueError("GROQ_API_KEY not found in environment variables.")
         
     # 1. Search Tavily for competitors and alternatives
     query = f"{company_name} competitors alternatives rivals market share"
@@ -25,7 +25,7 @@ def run_competitor_finder(company_name: str, company_profile: str) -> str:
     except Exception as e:
         raise RuntimeError(f"Competitor Finder failed to search Tavily: {str(e)}")
         
-    # 2. Call Gemini 2.5 Flash using the google-genai SDK
+    # 2. Call Groq Llama 3.3 70B
     prompt = f"""
 You are an expert competitive intelligence analyst. Your job is to identify the top 3-5 competitors for the target company and provide brief profiles for each.
 
@@ -47,11 +47,15 @@ Format your response in structured markdown. Be objective and factual.
 """
     
     try:
-        client = genai.Client(api_key=gemini_key)
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
+        client = Groq(api_key=groq_key)
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are an expert competitive intelligence analyst."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2
         )
-        return response.text
+        return response.choices[0].message.content
     except Exception as e:
-        raise RuntimeError(f"Competitor Finder failed to analyze competitors with Gemini: {str(e)}")
+        raise RuntimeError(f"Competitor Finder failed to analyze competitors with Groq: {str(e)}")

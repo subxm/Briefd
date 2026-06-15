@@ -1,8 +1,8 @@
 import os
+import json
 from typing import List
 from pydantic import BaseModel
-from google import genai
-from google.genai import types
+from groq import Groq
 
 class CompetitorFeatureState(BaseModel):
     competitor_name: str
@@ -29,47 +29,37 @@ class ComparisonMatrix(BaseModel):
 
 def extract_competitors_intelligence(briefing_text: str) -> str:
     """
-    Parses briefing text using Gemini with a structured schema to extract
+    Parses briefing text using Groq Llama 3.3 70B with JSON Mode to extract
     competitor details and a comparison matrix.
     """
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    if not gemini_key:
-        raise ValueError("GEMINI_API_KEY not found in environment variables.")
+    groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key:
+        raise ValueError("GROQ_API_KEY not found in environment variables.")
         
-    client = genai.Client(api_key=gemini_key)
+    client = Groq(api_key=groq_key)
+    
+    schema_str = json.dumps(ComparisonMatrix.model_json_schema(), indent=2)
     
     prompt = f"""
     You are an expert market researcher and business analyst. 
     Analyze the competitive research briefing below and extract a highly structured side-by-side comparison matrix.
     
-    You must extract:
-    1. The target company name.
-    2. Profiles for each competitor detailed in the report:
-       - Name
-       - 2-4 key strengths
-       - 2-4 key weaknesses
-       - Market scale or sizing category (e.g. "Startup", "Scaleup", "Enterprise Giant")
-       - Business or pricing model (e.g. "Usage-based SaaS", "Freemium Developer API")
-       - Core differentiator (their unique value proposition compared to the target company)
-       - Competitive strength rating (1-10, where 10 is the strongest threat)
-    3. A side-by-side feature grid:
-       - Extract 5-7 key functional capabilities, features, or developer tools compared in the text (e.g. "Auto-scaling", "SOC2 Compliance", "GraphQL support").
-       - For each feature, indicate if the target company supports it (true/false).
-       - For each feature, list whether each competitor supports it (true/false) using their names.
-       
+    You must output a JSON object that strictly adheres to the following JSON Schema:
+    {schema_str}
+    
     Intel Briefing Text:
     ---
     {briefing_text}
     ---
     """
     
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=ComparisonMatrix,
-            temperature=0.1
-        )
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant that outputs JSON matching a specific schema."},
+            {"role": "user", "content": prompt}
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.1
     )
-    return response.text
+    return response.choices[0].message.content
