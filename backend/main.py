@@ -420,7 +420,7 @@ async def get_payments_config():
 @app.post("/payments/upi-submit")
 async def upi_submit(payload: UpiPaymentSubmitRequest, current_user: dict = Depends(get_current_user)):
     """
-    Submits a UPI payment UTR code, records it, and immediately upgrades the user to Pro.
+    Submits a UPI payment UTR code, records it with 'pending' status for admin approval.
     """
     user_id = current_user["id"]
     user_email = current_user["email"]
@@ -434,7 +434,7 @@ async def upi_submit(payload: UpiPaymentSubmitRequest, current_user: dict = Depe
     
     async with httpx.AsyncClient() as client:
         try:
-            # 1. Insert transaction record into upi_payments table
+            # 1. Insert transaction record into upi_payments table (status: pending)
             db_response = await client.post(
                 f"{SUPABASE_URL}/rest/v1/upi_payments",
                 headers={
@@ -448,7 +448,7 @@ async def upi_submit(payload: UpiPaymentSubmitRequest, current_user: dict = Depe
                     "email": user_email,
                     "utr": utr,
                     "amount": 499,
-                    "status": "approved"
+                    "status": "pending"
                 }
             )
             
@@ -459,25 +459,8 @@ async def upi_submit(payload: UpiPaymentSubmitRequest, current_user: dict = Depe
                 logger.error(f"Failed to record UPI payment: {db_response.text}")
                 raise HTTPException(status_code=500, detail="Failed to record payment transaction.")
                 
-            # 2. Immediately upgrade user tier to pro
-            profile_response = await client.patch(
-                f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{user_id}",
-                headers={
-                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
-                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "tier": "pro"
-                }
-            )
-            
-            if profile_response.status_code not in [200, 201, 204]:
-                logger.error(f"Failed to patch user profile to Pro: {profile_response.text}")
-                raise HTTPException(status_code=500, detail="Failed to upgrade user profile in database.")
-                
-            logger.info(f"Successfully upgraded user {user_email} to Pro via direct UPI payment.")
-            return {"status": "success", "message": "Successfully upgraded to Pro tier."}
+            logger.info(f"Successfully recorded pending UPI payment for {user_email}.")
+            return {"status": "success", "message": "Payment submitted for verification. Your account will be upgraded once verified."}
             
         except HTTPException as he:
             raise he
@@ -509,6 +492,65 @@ async def get_admin_payments(current_user: dict = Depends(get_current_user)):
             return response.json()
         except Exception as e:
             logger.error(f"Failed to connect to DB: {e}")
+            raise HTTPException(status_code=500, detail="Failed to connect to database.")
+
+class ApprovePaymentRequest(BaseModel):
+    user_id: str
+    payment_id: str
+
+@app.post("/admin/payments/approve")
+async def admin_approve_payment(payload: ApprovePaymentRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Approves a payment and upgrades the target user to 'pro' (Admin Only).
+    """
+    user_email = current_user["email"]
+    if user_email.lower() != ADMIN_EMAIL.lower():
+        raise HTTPException(status_code=403, detail="Forbidden. Admin access only.")
+        
+    target_user_id = payload.user_id
+    payment_id = payload.payment_id
+    
+    logger.info(f"Admin approving payment: {payment_id} for user: {target_user_id}")
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            # 1. Update payment status to 'approved'
+            pay_response = await client.patch(
+                f"{SUPABASE_URL}/rest/v1/upi_payments?id=eq.{payment_id}",
+                headers={
+                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "status": "approved"
+                }
+            )
+            if pay_response.status_code not in [200, 201, 204]:
+                logger.error(f"Failed to update payment status: {pay_response.text}")
+                raise HTTPException(status_code=500, detail="Failed to update transaction status.")
+                
+            # 2. Upgrade user to 'pro' in profiles table
+            profile_response = await client.patch(
+                f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{target_user_id}",
+                headers={
+                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "tier": "pro"
+                }
+            )
+            if profile_response.status_code not in [200, 201, 204]:
+                logger.error(f"Failed to upgrade user profile: {profile_response.text}")
+                raise HTTPException(status_code=500, detail="Failed to update user profile in database.")
+                
+            logger.info(f"Admin successfully approved Pro access for user ID: {target_user_id}")
+            return {"status": "success", "message": "Successfully approved Pro tier and upgraded user."}
+            
+        except Exception as e:
+            logger.error(f"Failed to connect to database for approval: {e}")
             raise HTTPException(status_code=500, detail="Failed to connect to database.")
 
 class RevokePaymentRequest(BaseModel):

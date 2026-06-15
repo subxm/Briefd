@@ -14,6 +14,7 @@ export default function CheckoutPage() {
   
   const [utr, setUtr] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [showGuide, setShowGuide] = useState(false);
 
@@ -45,12 +46,6 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
-      // Set local sessionStorage to sync Pro tier instantly on redirect
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('pending_pro_upgrade', 'true');
-      }
-      setUser(prev => prev ? { ...prev, tier: 'pro' } : null);
-
       const response = await fetch(`${API_BASE_URL}/payments/upi-submit`, {
         method: 'POST',
         headers: {
@@ -66,16 +61,11 @@ export default function CheckoutPage() {
         throw new Error(data.detail || "Failed to submit transaction.");
       }
 
-      await refreshUser();
-      navigate('/dashboard?payment=success', { replace: true });
+      setIsSubmittedSuccessfully(true);
     } catch (err) {
       console.error("Submission failed:", err);
-      // Revert local pro tier on failure
-      setUser(prev => prev ? { ...prev, tier: 'free' } : null);
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('pending_pro_upgrade');
-      }
       setErrorMsg(err.message || "Something went wrong. Please verify your UTR and try again.");
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -103,6 +93,47 @@ export default function CheckoutPage() {
           </div>
           <span className="text-[12px] font-semibold tracking-tight">Loading session...</span>
         </div>
+      </div>
+    );
+  }
+
+  if (isSubmittedSuccessfully) {
+    return (
+      <div className="min-h-screen w-screen bg-background text-foreground flex flex-col font-body relative overflow-x-hidden select-none">
+        {/* Background Graphic */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+          <video 
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_e1deeb12-8fb7-4071-a42a-60779fc64ab6.mp4" 
+            muted 
+            autoPlay 
+            loop 
+            playsInline 
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/60 to-background" />
+        </div>
+
+        <main className="relative z-10 flex-1 flex items-center justify-center p-6">
+          <div className="w-full max-w-md bg-background/50 border border-border backdrop-blur-md rounded-2xl p-8 text-center shadow-lg">
+            <div className="h-12 w-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Check className="h-6 w-6" />
+            </div>
+            <h1 className="text-xl font-bold text-foreground tracking-tight">Verification Pending</h1>
+            <p className="text-[11.5px] text-muted-foreground mt-3 leading-relaxed font-body">
+              Your UPI reference ID (UTR) <strong className="font-mono">{utr}</strong> has been successfully submitted for review. 
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed font-body">
+              We are verifying your transaction. Your account will be automatically upgraded to <strong>Pro</strong> within 10–15 minutes once the bank transfer is confirmed.
+            </p>
+            
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="w-full h-10 mt-8 bg-accent text-accent-foreground hover:bg-accent/90 rounded-[8px] text-xs font-semibold tracking-tight transition-all flex items-center justify-center cursor-pointer shadow-md"
+            >
+              Go to Workspace Dashboard
+            </button>
+          </div>
+        </main>
       </div>
     );
   }

@@ -20,6 +20,7 @@ export default function SettingsPage() {
   const [isAdminLoading, setIsAdminLoading] = useState(false);
   const [adminError, setAdminError] = useState(null);
   const [revokingId, setRevokingId] = useState(null);
+  const [approvingId, setApprovingId] = useState(null);
 
   const fetchAdminPayments = async () => {
     setIsAdminLoading(true);
@@ -91,6 +92,47 @@ export default function SettingsPage() {
       alert(err.message || "Failed to revoke tier.");
     } finally {
       setRevokingId(null);
+    }
+  };
+
+  const handleApprove = async (targetUserId, paymentId) => {
+    if (!window.confirm("Are you sure you want to approve this UPI payment and grant Pro access?")) {
+      return;
+    }
+    setApprovingId(paymentId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const activeToken = session?.access_token || token;
+
+      const response = await fetch(`${API_BASE_URL}/admin/payments/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${activeToken}`
+        },
+        body: JSON.stringify({
+          user_id: targetUserId,
+          payment_id: paymentId
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.detail || "Failed to approve payment.");
+      }
+
+      // Re-fetch list
+      await fetchAdminPayments();
+      
+      // If the admin upgraded themselves, refresh local state
+      if (targetUserId === user.id) {
+        await refreshUser();
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Failed to approve payment.");
+    } finally {
+      setApprovingId(null);
     }
   };
   
@@ -511,28 +553,47 @@ print(response.json())`}
                               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
                                 payment.status === 'approved'
                                   ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                                  : payment.status === 'pending'
+                                  ? 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400'
                                   : 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'
                               }`}>
                                 {payment.status}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-center">
-                              {payment.status === 'approved' ? (
-                                <button
-                                  onClick={() => handleRevoke(payment.user_id, payment.id)}
-                                  disabled={revokingId !== null}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-all font-semibold cursor-pointer disabled:opacity-50"
-                                >
-                                  {revokingId === payment.id ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="h-3 w-3" />
-                                  )}
-                                  <span>Revoke Pro</span>
-                                </button>
-                              ) : (
-                                <span className="text-muted-foreground/60 text-[10px] font-medium">No actions</span>
-                              )}
+                              <div className="flex items-center justify-center gap-2">
+                                {payment.status === 'pending' && (
+                                  <button
+                                    onClick={() => handleApprove(payment.user_id, payment.id)}
+                                    disabled={approvingId !== null || revokingId !== null}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-all font-semibold cursor-pointer disabled:opacity-50"
+                                  >
+                                    {approvingId === payment.id ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <Check className="h-3 w-3" />
+                                    )}
+                                    <span>Approve</span>
+                                  </button>
+                                )}
+                                {payment.status === 'approved' && (
+                                  <button
+                                    onClick={() => handleRevoke(payment.user_id, payment.id)}
+                                    disabled={approvingId !== null || revokingId !== null}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-all font-semibold cursor-pointer disabled:opacity-50"
+                                  >
+                                    {revokingId === payment.id ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-3 w-3" />
+                                    )}
+                                    <span>Revoke Pro</span>
+                                  </button>
+                                )}
+                                {payment.status === 'revoked' && (
+                                  <span className="text-muted-foreground/60 text-[10px] font-medium">No actions</span>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
