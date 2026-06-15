@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
 
 export default function CheckoutPage() {
-  const { user, token, refreshUser, setUser } = useAuth();
+  const { user, token, loading, refreshUser, setUser } = useAuth();
   const navigate = useNavigate();
   
   const [utr, setUtr] = useState('');
@@ -19,12 +19,13 @@ export default function CheckoutPage() {
 
   // Redirect if not logged in or if already Pro
   useEffect(() => {
+    if (loading) return;
     if (!token) {
       navigate('/login');
     } else if (user && user.tier === 'pro') {
       navigate('/dashboard');
     }
-  }, [user, token, navigate]);
+  }, [user, token, loading, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,6 +79,33 @@ export default function CheckoutPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-screen bg-background text-foreground flex flex-col items-center justify-center font-body relative overflow-hidden select-none">
+        <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+          <video 
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_e1deeb12-8fb7-4071-a42a-60779fc64ab6.mp4" 
+            muted 
+            autoPlay 
+            loop 
+            playsInline 
+            className="w-full h-full object-cover opacity-20"
+          />
+        </div>
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="relative h-12 w-12 shrink-0">
+            <div className="absolute inset-0 rounded-full border-[3px] border-t-accent border-r-accent/30 border-b-transparent border-l-transparent animate-spin"></div>
+            <div className="absolute inset-0 rounded-full border-[3px] border-t-transparent border-r-transparent border-b-accent border-l-accent/20 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.7s' }}></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Sparkles className="h-4.5 w-4.5 text-accent animate-pulse" />
+            </div>
+          </div>
+          <span className="text-[12px] font-semibold tracking-tight">Loading session...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-screen bg-background text-foreground flex flex-col font-body relative overflow-x-hidden select-none">
