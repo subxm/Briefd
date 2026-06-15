@@ -10,7 +10,6 @@ from pdf_generator import generate_briefing_pdf
 from competitors_extractor import extract_competitors_intelligence
 from pydantic import BaseModel
 import httpx
-import stripe
 
 # Load environment variables from .env
 load_dotenv()

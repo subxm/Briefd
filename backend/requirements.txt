@@ -6,5 +6,3 @@ google-genai
 tavily-python
 httpx
 fpdf2
-stripe
-
