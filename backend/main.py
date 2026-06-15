@@ -26,8 +26,8 @@ required_env_vars = {
     "SUPABASE_URL": "Required for database syncing and user profiles.",
     "SUPABASE_ANON_KEY": "Required for client-facing database operations.",
     "SUPABASE_SERVICE_ROLE_KEY": "Required for backend bypass controls and billing calculations.",
-    "RAZORPAY_KEY_ID": "Required for secure Razorpay transaction authorizations.",
-    "RAZORPAY_KEY_SECRET": "Required for secure Razorpay transaction signature validations."
+    "UPI_ID": "Required for generating direct payment QR codes.",
+    "ADMIN_EMAIL": "Required for identifying the admin console user."
 }
 
 missing_vars = []
@@ -52,9 +52,9 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-# Razorpay API Key Configuration
-RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
-RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+# UPI & Admin Configuration
+UPI_ID = os.getenv("UPI_ID")
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
 from orchestrator import run_research_pipeline
 
@@ -403,86 +403,62 @@ async def research(request: ResearchRequest, current_user: dict = Depends(get_cu
     )
 
 
-# --- RAZORPAY PAYMENTS ENDPOINTS ---
+# --- UPI P2P PAYMENTS & ADMIN AUDIT ENDPOINTS ---
 
-class RazorpayVerifyRequest(BaseModel):
-    razorpay_order_id: str
-    razorpay_payment_id: str
-    razorpay_signature: str
+class UpiPaymentSubmitRequest(BaseModel):
+    utr: str
 
-@app.post("/payments/razorpay-create-order")
-async def razorpay_create_order(current_user: dict = Depends(get_current_user)):
+@app.get("/payments/config")
+async def get_payments_config():
     """
-    Creates a Razorpay Order for ₹499.00 INR (49900 paise) for Pro Upgrade.
+    Returns public payment configurations (UPI ID).
+    """
+    return {"upi_id": UPI_ID}
+
+@app.post("/payments/upi-submit")
+async def upi_submit(payload: UpiPaymentSubmitRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Submits a UPI payment UTR code, records it, and immediately upgrades the user to Pro.
     """
     user_id = current_user["id"]
+    user_email = current_user["email"]
+    utr = payload.utr.strip()
     
-    amount = 49900  # ₹499.00 INR in paise
-    currency = "INR"
-    receipt = f"receipt_{user_id[:20]}_{int(datetime.utcnow().timestamp())}"
+    # Validate UTR: Must be exactly 12 numeric digits
+    if not utr.isdigit() or len(utr) != 12:
+        raise HTTPException(status_code=400, detail="Invalid UTR. It must be exactly 12 numeric digits.")
+        
+    logger.info(f"Processing P2P UPI submission for user: {user_id}, UTR: {utr}")
     
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(
-                "https://api.razorpay.com/v1/orders",
-                auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET),
+            # 1. Insert transaction record into upi_payments table
+            db_response = await client.post(
+                f"{SUPABASE_URL}/rest/v1/upi_payments",
+                headers={
+                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=representation"
+                },
                 json={
-                    "amount": amount,
-                    "currency": currency,
-                    "receipt": receipt,
-                    "notes": {
-                        "user_id": user_id
-                    }
+                    "user_id": user_id,
+                    "email": user_email,
+                    "utr": utr,
+                    "amount": 499,
+                    "status": "approved"
                 }
             )
             
-            if response.status_code not in [200, 201]:
-                logger.error(f"Failed to create Razorpay order: {response.text}")
-                raise HTTPException(status_code=500, detail="Failed to initialize payment order.")
+            if db_response.status_code not in [200, 201, 204]:
+                # Check for duplicate key violation (indicating UTR already submitted)
+                if "duplicate key" in db_response.text.lower() or "unique_violation" in db_response.text.lower() or db_response.status_code == 409:
+                    raise HTTPException(status_code=400, detail="This UPI transaction ID (UTR) has already been submitted.")
+                logger.error(f"Failed to record UPI payment: {db_response.text}")
+                raise HTTPException(status_code=500, detail="Failed to record payment transaction.")
                 
-            order_data = response.json()
-            return {
-                "key_id": RAZORPAY_KEY_ID,
-                "order_id": order_data["id"],
-                "amount": order_data["amount"],
-                "currency": order_data["currency"]
-            }
-        except Exception as e:
-            logger.error(f"Failed to connect to Razorpay: {e}")
-            raise HTTPException(status_code=500, detail="Failed to connect to payment server.")
-
-@app.post("/payments/razorpay-verify")
-async def razorpay_verify(payload: RazorpayVerifyRequest, current_user: dict = Depends(get_current_user)):
-    """
-    Verifies the Razorpay payment signature and upgrades user tier to Pro.
-    """
-    import hmac
-    import hashlib
-    
-    user_id = current_user["id"]
-    
-    order_id = payload.razorpay_order_id
-    payment_id = payload.razorpay_payment_id
-    signature = payload.razorpay_signature
-    
-    # Verify the signature: order_id | payment_id, signed with key_secret
-    msg = f"{order_id}|{payment_id}".encode("utf-8")
-    expected_sig = hmac.new(
-        RAZORPAY_KEY_SECRET.encode("utf-8"),
-        msg,
-        hashlib.sha256
-    ).hexdigest()
-    
-    if not hmac.compare_digest(expected_sig, signature):
-        logger.error(f"Razorpay signature mismatch. Expected: {expected_sig}, Received: {signature}")
-        raise HTTPException(status_code=400, detail="Invalid payment signature.")
-        
-    logger.info(f"Razorpay payment verified successfully. Upgrading user: {user_id}")
-    
-    # Upgrade user to Pro in database
-    async with httpx.AsyncClient() as client:
-        try:
-            db_response = await client.patch(
+            # 2. Immediately upgrade user tier to pro
+            profile_response = await client.patch(
                 f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{user_id}",
                 headers={
                     "apikey": SUPABASE_SERVICE_ROLE_KEY,
@@ -493,14 +469,103 @@ async def razorpay_verify(payload: RazorpayVerifyRequest, current_user: dict = D
                     "tier": "pro"
                 }
             )
-            if db_response.status_code not in [200, 201, 204]:
-                logger.error(f"Failed to patch user profile to Pro: {db_response.text}")
+            
+            if profile_response.status_code not in [200, 201, 204]:
+                logger.error(f"Failed to patch user profile to Pro: {profile_response.text}")
                 raise HTTPException(status_code=500, detail="Failed to upgrade user profile in database.")
                 
-            logger.info(f"Successfully upgraded user {user_id} to Pro via Razorpay.")
-            return {"status": "success", "message": "Signature verified and account upgraded to Pro."}
+            logger.info(f"Successfully upgraded user {user_email} to Pro via direct UPI payment.")
+            return {"status": "success", "message": "Successfully upgraded to Pro tier."}
+            
+        except HTTPException as he:
+            raise he
         except Exception as e:
-            logger.error(f"Failed to connect to database for upgrade: {e}")
+            logger.error(f"Database error during UPI submission: {e}")
+            raise HTTPException(status_code=500, detail="Failed to connect to database.")
+
+@app.get("/admin/payments")
+async def get_admin_payments(current_user: dict = Depends(get_current_user)):
+    """
+    Retrieves all UPI payment submissions (Admin Only).
+    """
+    user_email = current_user["email"]
+    if user_email.lower() != ADMIN_EMAIL.lower():
+        raise HTTPException(status_code=403, detail="Forbidden. Admin access only.")
+        
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"{SUPABASE_URL}/rest/v1/upi_payments?order=created_at.desc",
+                headers={
+                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}"
+                }
+            )
+            if response.status_code != 200:
+                logger.error(f"Failed to fetch payment submissions: {response.text}")
+                raise HTTPException(status_code=500, detail="Failed to fetch transactions.")
+            return response.json()
+        except Exception as e:
+            logger.error(f"Failed to connect to DB: {e}")
+            raise HTTPException(status_code=500, detail="Failed to connect to database.")
+
+class RevokePaymentRequest(BaseModel):
+    user_id: str
+    payment_id: str
+
+@app.post("/admin/payments/revoke")
+async def admin_revoke_payment(payload: RevokePaymentRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Revokes a payment and downgrades the target user back to 'free' (Admin Only).
+    """
+    user_email = current_user["email"]
+    if user_email.lower() != ADMIN_EMAIL.lower():
+        raise HTTPException(status_code=403, detail="Forbidden. Admin access only.")
+        
+    target_user_id = payload.user_id
+    payment_id = payload.payment_id
+    
+    logger.info(f"Admin revoking payment: {payment_id} for user: {target_user_id}")
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            # 1. Update payment status to 'revoked'
+            pay_response = await client.patch(
+                f"{SUPABASE_URL}/rest/v1/upi_payments?id=eq.{payment_id}",
+                headers={
+                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "status": "revoked"
+                }
+            )
+            if pay_response.status_code not in [200, 201, 204]:
+                logger.error(f"Failed to update payment status: {pay_response.text}")
+                raise HTTPException(status_code=500, detail="Failed to update transaction status.")
+                
+            # 2. Downgrade user to 'free' in profiles table
+            profile_response = await client.patch(
+                f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{target_user_id}",
+                headers={
+                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "tier": "free"
+                }
+            )
+            if profile_response.status_code not in [200, 201, 204]:
+                logger.error(f"Failed to downgrade user profile: {profile_response.text}")
+                raise HTTPException(status_code=500, detail="Failed to update user profile in database.")
+                
+            logger.info(f"Admin successfully revoked Pro access for user ID: {target_user_id}")
+            return {"status": "success", "message": "Successfully revoked Pro tier and downgraded user."}
+            
+        except Exception as e:
+            logger.error(f"Failed to connect to database for revocation: {e}")
             raise HTTPException(status_code=500, detail="Failed to connect to database.")
 
 

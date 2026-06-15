@@ -12,6 +12,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import SettingsPage from './pages/SettingsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
+import CheckoutPage from './pages/CheckoutPage';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
 
           {/* Protected Routes */}
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/competitors" element={<CompetitorsPage />} />
           <Route path="/market-trends" element={<MarketTrendsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />

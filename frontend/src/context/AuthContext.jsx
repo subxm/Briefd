@@ -2,25 +2,6 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { API_BASE_URL } from '../config';
 
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    if (window.Razorpay) {
-      resolve(true);
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    script.onload = () => {
-      resolve(true);
-    };
-    script.onerror = () => {
-      resolve(false);
-    };
-    document.body.appendChild(script);
-  });
-};
-
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -162,96 +143,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const upgradeToPro = async () => {
-    // 1. Load Razorpay SDK script dynamically
-    const res = await loadRazorpayScript();
-    if (!res) {
-      throw new Error("Razorpay SDK failed to load. Are you offline?");
-    }
-
-    // 2. Retrieve dynamic Supabase session token
-    const { data: { session } } = await supabase.auth.getSession();
-    const activeToken = session?.access_token || token;
-
-    if (!activeToken) throw new Error("Unauthorized: No session token found.");
-    
-    // 3. Create order on backend
-    const response = await fetch(`${API_BASE_URL}/payments/razorpay-create-order`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${activeToken}`
-      }
-    });
-
-    const orderData = await response.json();
-
-    if (!response.ok) {
-      throw new Error(orderData.detail || 'Failed to initiate Razorpay order.');
-    }
-
-    // 4. Configure Razorpay checkout options
-    const options = {
-      key: orderData.key_id,
-      amount: orderData.amount,
-      currency: orderData.currency,
-      name: "Briefd",
-      description: "Briefd Professional Pass",
-      order_id: orderData.order_id,
-      prefill: {
-        name: user?.name || "User",
-        email: user?.email || "",
-      },
-      handler: async function (paymentResponse) {
-        try {
-          // Set pending pro upgrade indicator locally in sessionStorage to avoid webhook lag
-          if (typeof window !== 'undefined') {
-            sessionStorage.setItem('pending_pro_upgrade', 'true');
-          }
-          
-          // Instantly upgrade local user object
-          setUser(prev => prev ? { ...prev, tier: 'pro' } : null);
-
-          // Call backend verification
-          const verifyResponse = await fetch(`${API_BASE_URL}/payments/razorpay-verify`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${activeToken}`
-            },
-            body: JSON.stringify({
-              razorpay_order_id: paymentResponse.razorpay_order_id,
-              razorpay_payment_id: paymentResponse.razorpay_payment_id,
-              razorpay_signature: paymentResponse.razorpay_signature
-            })
-          });
-
-          if (!verifyResponse.ok) {
-            const errData = await verifyResponse.json().catch(() => ({}));
-            throw new Error(errData.detail || "Payment verification failed.");
-          }
-
-          // Trigger state sync and dashboard reload
-          await refreshUser();
-          
-          // Redirect to dashboard with payment success search param
-          window.location.href = `${window.location.origin}/dashboard?payment=success`;
-        } catch (err) {
-          console.error("Verification error:", err);
-          window.location.href = `${window.location.origin}/dashboard?payment=cancel`;
-        }
-      },
-      modal: {
-        ondismiss: function () {
-          console.log("Checkout modal dismissed.");
-        }
-      },
-      theme: {
-        color: "#6366f1", // Indigo accent
-      }
-    };
-
-    const rzp = new window.Razorpay(options);
-    rzp.open();
+    window.location.href = "/checkout";
   };
 
   const loginWithGoogle = async () => {
