@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import DashboardLayout from '../components/DashboardLayout';
+import { API_BASE_URL } from '../config';
 
 export default function SettingsPage() {
   const { user, token, refreshUser, upgradeToPro, loading, setUser } = useAuth();
