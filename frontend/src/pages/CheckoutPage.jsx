@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, Check, Sparkles, Copy, 
-  HelpCircle, CreditCard, Landmark, CheckCircle2, AlertCircle 
+  ArrowLeft, Check, Sparkles, 
+  HelpCircle, AlertCircle 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
@@ -12,9 +12,7 @@ export default function CheckoutPage() {
   const { user, token, refreshUser, setUser } = useAuth();
   const navigate = useNavigate();
   
-  const [upiId, setUpiId] = useState('briefd@upi');
   const [utr, setUtr] = useState('');
-  const [copied, setCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [showGuide, setShowGuide] = useState(false);
@@ -27,29 +25,6 @@ export default function CheckoutPage() {
       navigate('/dashboard');
     }
   }, [user, token, navigate]);
-
-  // Fetch UPI ID from backend payment configuration
-  useEffect(() => {
-    if (!token) return;
-    fetch(`${API_BASE_URL}/payments/config`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.upi_id) {
-          setUpiId(data.upi_id);
-        }
-      })
-      .catch(err => console.error("Failed to load payment config:", err));
-  }, [token]);
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(upiId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -103,10 +78,6 @@ export default function CheckoutPage() {
       setIsSubmitting(false);
     }
   };
-
-  // Generate dynamic QR Code payload URL
-  const qrData = encodeURIComponent(`upi://pay?pa=${upiId}&pn=Briefd&am=499&cu=INR&tn=ProUpgrade`);
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${qrData}&color=111827&margin=10`;
 
   return (
     <div className="min-h-screen w-screen bg-background text-foreground flex flex-col font-body relative overflow-x-hidden select-none">
@@ -185,37 +156,18 @@ export default function CheckoutPage() {
           <form onSubmit={handleSubmit} className="flex-grow flex flex-col justify-between gap-6">
             <div>
               <h2 className="text-sm font-semibold tracking-tight text-foreground">Pay Direct via UPI</h2>
-              <p className="text-[10px] text-muted-foreground mt-1">Scan the QR code below or copy the UPI ID to complete the transfer.</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Scan the QR code below to complete the transfer.</p>
 
               {/* QR Code Container */}
               <div className="mt-5 flex flex-col items-center gap-3">
                 <div className="bg-white p-2 rounded-xl border border-border/80 shadow-md">
                   <img 
-                    src={qrCodeUrl} 
+                    src="/upi_qr_cropped.png" 
                     alt="Scan UPI QR Code" 
-                    className="h-[170px] w-[170px] object-contain select-none"
+                    className="h-[170px] w-[170px] object-contain select-none animate-none"
                     draggable="false"
                   />
                 </div>
-
-                {/* Click to Copy UPI ID */}
-                <button
-                  type="button"
-                  onClick={copyToClipboard}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary border border-border/60 hover:bg-secondary/80 text-[10.5px] font-medium text-foreground transition-all cursor-pointer select-none"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold animate-none">Copied ID!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>{upiId}</span>
-                    </>
-                  )}
-                </button>
               </div>
 
               {/* Input for UTR */}

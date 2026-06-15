@@ -25,9 +25,7 @@ required_env_vars = {
     "TAVILY_API_KEY": "Required for real-time web search and competitor indexing.",
     "SUPABASE_URL": "Required for database syncing and user profiles.",
     "SUPABASE_ANON_KEY": "Required for client-facing database operations.",
-    "SUPABASE_SERVICE_ROLE_KEY": "Required for backend bypass controls and billing calculations.",
-    "UPI_ID": "Required for generating direct payment QR codes.",
-    "ADMIN_EMAIL": "Required for identifying the admin console user."
+    "SUPABASE_SERVICE_ROLE_KEY": "Required for backend bypass controls and billing calculations."
 }
 
 missing_vars = []
@@ -52,9 +50,14 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-# UPI & Admin Configuration
-UPI_ID = os.getenv("UPI_ID")
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
+# UPI & Admin Configuration (Optional with fallbacks)
+UPI_ID = os.getenv("UPI_ID") or "shubhamnegissn14-1@okhdfcbank"
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL") or "shubhamnegissn14@gmail.com"
+
+if not os.getenv("UPI_ID"):
+    logger.warning("UPI_ID environment variable is missing. Falling back to default: %s", UPI_ID)
+if not os.getenv("ADMIN_EMAIL"):
+    logger.warning("ADMIN_EMAIL environment variable is missing. Falling back to default: %s", ADMIN_EMAIL)
 
 from orchestrator import run_research_pipeline
 
