@@ -340,7 +340,7 @@ export default function DashboardPage() {
             <div>
               <p className="font-semibold text-foreground tracking-tight">Checkout Cancelled</p>
               <p className="mt-0.5 text-muted-foreground leading-relaxed">
-                The Stripe Checkout payment session was cancelled. No charges were made.
+                The payment session was cancelled. No charges were made.
               </p>
             </div>
           </div>

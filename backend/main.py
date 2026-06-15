@@ -26,7 +26,8 @@ required_env_vars = {
     "SUPABASE_URL": "Required for database syncing and user profiles.",
     "SUPABASE_ANON_KEY": "Required for client-facing database operations.",
     "SUPABASE_SERVICE_ROLE_KEY": "Required for backend bypass controls and billing calculations.",
-    "STRIPE_API_KEY": "Required for secure Stripe checkout session creations."
+    "RAZORPAY_KEY_ID": "Required for secure Razorpay transaction authorizations.",
+    "RAZORPAY_KEY_SECRET": "Required for secure Razorpay transaction signature validations."
 }
 
 missing_vars = []
@@ -51,9 +52,9 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-# Stripe API Key Configuration
-stripe.api_key = os.getenv("STRIPE_API_KEY")
-STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+# Razorpay API Key Configuration
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 
 from orchestrator import run_research_pipeline
 
@@ -402,112 +403,104 @@ async def research(request: ResearchRequest, current_user: dict = Depends(get_cu
     )
 
 
-# --- STRIPE PAYMENTS ENDPOINTS ---
+# --- RAZORPAY PAYMENTS ENDPOINTS ---
 
-@app.post("/payments/create-checkout-session")
-async def create_checkout_session(current_user: dict = Depends(get_current_user)):
+class RazorpayVerifyRequest(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+
+@app.post("/payments/razorpay-create-order")
+async def razorpay_create_order(current_user: dict = Depends(get_current_user)):
     """
-    Creates a Stripe Checkout Session for upgrading to Pro.
+    Creates a Razorpay Order for ₹499.00 INR (49900 paise) for Pro Upgrade.
     """
     user_id = current_user["id"]
-    user_email = current_user["email"]
     
-    # Get base frontend URL for redirects. Support localhost default or config env.
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    amount = 49900  # ₹499.00 INR in paise
+    currency = "INR"
+    receipt = f"receipt_{user_id[:20]}_{int(datetime.utcnow().timestamp())}"
     
-    try:
-        session = stripe.checkout.Session.create(
-            payment_method_types=["upi", "card"],
-            line_items=[
-                {
-                    "price_data": {
-                        "currency": "inr",
-                        "product_data": {
-                            "name": "Briefd Professional Pass",
-                            "description": "Unlock unlimited scans, feature capability matrices, and advanced PDF exports.",
-                        },
-                        "unit_amount": 49900,  # ₹499.00 INR (Stripe takes amount in paise)
-                    },
-                    "quantity": 1,
-                }
-            ],
-            mode="payment",
-            customer_email=user_email,
-            metadata={
-                "user_id": user_id
-            },
-            success_url=f"{frontend_url}/dashboard?payment=success",
-            cancel_url=f"{frontend_url}/dashboard?payment=cancel",
-        )
-        return {"url": session.url}
-    except Exception as e:
-        logger.error(f"Failed to create Stripe checkout session: {e}")
-        raise HTTPException(status_code=500, detail="Failed to initialize checkout session.")
-
-@app.post("/payments/webhook")
-async def stripe_webhook(response: Response, request: Request):
-    """
-    Listens for Stripe webhooks to process user billing tier upgrades.
-    """
-    payload = await request.body()
-    sig_header = request.headers.get("stripe-signature")
-    
-    event = None
-    
-    # 1. Parse and verify signature if WEBHOOK_SECRET is configured
-    if STRIPE_WEBHOOK_SECRET:
+    async with httpx.AsyncClient() as client:
         try:
-            event = stripe.Webhook.construct_event(
-                payload, sig_header, STRIPE_WEBHOOK_SECRET
-            )
-        except stripe.error.SignatureVerificationError as e:
-            logger.error(f"Invalid webhook signature: {e}")
-            raise HTTPException(status_code=400, detail="Invalid webhook signature.")
-        except Exception as e:
-            logger.error(f"Webhook parsing error: {e}")
-            raise HTTPException(status_code=400, detail="Webhook parsing error.")
-    else:
-        # Fallback for simple local testing if secret is not set
-        logger.warning("STRIPE_WEBHOOK_SECRET is missing. Skipping signature validation.")
-        try:
-            event = stripe.Event.construct_from(
-                json.loads(payload.decode("utf-8")), stripe.api_key
-            )
-        except Exception as e:
-            logger.error(f"Failed to parse unverified webhook body: {e}")
-            raise HTTPException(status_code=400, detail="Invalid payload format.")
-            
-    # 2. Process checkout session completed
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-        user_id = session.get("metadata", {}).get("user_id")
-        
-        if not user_id:
-            logger.error("Stripe Checkout event is missing user_id in metadata.")
-            raise HTTPException(status_code=400, detail="Missing user_id in metadata.")
-            
-        logger.info(f"Processing Pro Upgrade payment for user: {user_id}")
-        
-        # 3. Upgrade user tier to 'pro' on Supabase
-        async with httpx.AsyncClient() as client:
-            try:
-                db_response = await client.patch(
-                    f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{user_id}",
-                    headers={
-                        "apikey": SUPABASE_SERVICE_ROLE_KEY,
-                        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "tier": "pro"
+            response = await client.post(
+                "https://api.razorpay.com/v1/orders",
+                auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET),
+                json={
+                    "amount": amount,
+                    "currency": currency,
+                    "receipt": receipt,
+                    "notes": {
+                        "user_id": user_id
                     }
-                )
-                if db_response.status_code not in [200, 201, 204]:
-                    logger.error(f"Failed to patch user profile to Pro: {db_response.text}")
-                    raise HTTPException(status_code=500, detail="Failed to upgrade user profile in database.")
-                logger.info(f"Successfully upgraded user {user_id} to Pro via Stripe payment.")
-            except Exception as e:
-                logger.error(f"Failed to connect to database for upgrade: {e}")
-                raise HTTPException(status_code=500, detail="Failed to connect to database.")
+                }
+            )
+            
+            if response.status_code not in [200, 201]:
+                logger.error(f"Failed to create Razorpay order: {response.text}")
+                raise HTTPException(status_code=500, detail="Failed to initialize payment order.")
                 
-    return {"status": "success"}
+            order_data = response.json()
+            return {
+                "key_id": RAZORPAY_KEY_ID,
+                "order_id": order_data["id"],
+                "amount": order_data["amount"],
+                "currency": order_data["currency"]
+            }
+        except Exception as e:
+            logger.error(f"Failed to connect to Razorpay: {e}")
+            raise HTTPException(status_code=500, detail="Failed to connect to payment server.")
+
+@app.post("/payments/razorpay-verify")
+async def razorpay_verify(payload: RazorpayVerifyRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Verifies the Razorpay payment signature and upgrades user tier to Pro.
+    """
+    import hmac
+    import hashlib
+    
+    user_id = current_user["id"]
+    
+    order_id = payload.razorpay_order_id
+    payment_id = payload.razorpay_payment_id
+    signature = payload.razorpay_signature
+    
+    # Verify the signature: order_id | payment_id, signed with key_secret
+    msg = f"{order_id}|{payment_id}".encode("utf-8")
+    expected_sig = hmac.new(
+        RAZORPAY_KEY_SECRET.encode("utf-8"),
+        msg,
+        hashlib.sha256
+    ).hexdigest()
+    
+    if not hmac.compare_digest(expected_sig, signature):
+        logger.error(f"Razorpay signature mismatch. Expected: {expected_sig}, Received: {signature}")
+        raise HTTPException(status_code=400, detail="Invalid payment signature.")
+        
+    logger.info(f"Razorpay payment verified successfully. Upgrading user: {user_id}")
+    
+    # Upgrade user to Pro in database
+    async with httpx.AsyncClient() as client:
+        try:
+            db_response = await client.patch(
+                f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{user_id}",
+                headers={
+                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "tier": "pro"
+                }
+            )
+            if db_response.status_code not in [200, 201, 204]:
+                logger.error(f"Failed to patch user profile to Pro: {db_response.text}")
+                raise HTTPException(status_code=500, detail="Failed to upgrade user profile in database.")
+                
+            logger.info(f"Successfully upgraded user {user_id} to Pro via Razorpay.")
+            return {"status": "success", "message": "Signature verified and account upgraded to Pro."}
+        except Exception as e:
+            logger.error(f"Failed to connect to database for upgrade: {e}")
+            raise HTTPException(status_code=500, detail="Failed to connect to database.")
+
+
