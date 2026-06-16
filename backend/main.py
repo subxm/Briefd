@@ -297,6 +297,10 @@ async def get_briefing_competitors(briefing_id: int, current_user: dict = Depend
         raise HTTPException(status_code=500, detail=f"Failed to analyze competitors: {str(e)}")
 
 # --- RESEARCH PIPELINE ENDPOINT ---
+@app.head("/")
+def head_root():
+    return Response(status_code=200)
+
 @app.get("/")
 def read_root():
     return {"status": "healthy", "service": "Briefd Multi-Agent Tool API"}
