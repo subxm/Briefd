@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Bell, ChevronDown, Home, 
   LineChart, Settings, HelpCircle, Sparkles, LogOut,
-  FileText, Users, CheckCircle, Loader2
+  FileText, Users, CheckCircle, Loader2, Activity, BarChart2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -236,6 +236,28 @@ export default function DashboardLayout({ children }) {
               >
                 <Users className={`h-4 w-4 ${activePath === '/competitors' ? 'text-accent' : ''}`} />
                 <span>Competitors</span>
+              </button>
+              <button 
+                onClick={() => navigate('/swot')}
+                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
+                  activePath === '/swot' 
+                    ? 'bg-secondary text-foreground font-semibold' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                }`}
+              >
+                <Activity className={`h-4 w-4 ${activePath === '/swot' ? 'text-accent' : ''}`} />
+                <span>SWOT Analysis</span>
+              </button>
+              <button 
+                onClick={() => navigate('/compare')}
+                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
+                  activePath === '/compare' 
+                    ? 'bg-secondary text-foreground font-semibold' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                }`}
+              >
+                <BarChart2 className={`h-4 w-4 ${activePath === '/compare' ? 'text-accent' : ''}`} />
+                <span>Compare Tools</span>
               </button>
               <button 
                 onClick={() => navigate('/market-trends')}

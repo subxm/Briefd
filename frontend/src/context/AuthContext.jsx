@@ -79,20 +79,16 @@ export const AuthProvider = ({ children }) => {
         }
 
         // Fallback to auth details if profile is not found or fails
-        const isPendingPro = typeof window !== 'undefined' && sessionStorage.getItem('pending_pro_upgrade') === 'true';
         setUser({
           id: authUser.id,
           email: authUser.email,
           name: authUser.user_metadata?.name || 'User',
-          tier: isPendingPro ? 'pro' : 'free',
+          tier: 'free',
           scans_today: 0,
           last_scan_date: '',
           total_scans: 0
         });
       } else {
-        if (typeof window !== 'undefined') {
-          sessionStorage.removeItem('pending_pro_upgrade');
-        }
         setUser({
           id: authUser.id,
           email: authUser.email,

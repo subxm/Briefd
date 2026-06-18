@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, AlertCircle, CheckCircle } from 'lucide-react';
+import { Sparkles, AlertCircle, CheckCircle, Share2, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
 import SearchBar from '../components/SearchBar';
@@ -65,28 +65,20 @@ export default function DashboardPage() {
     }
   }, [user, loading]);
 
-  // Handle payment redirect URL parameters
-  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
-  const [showPaymentCancel, setShowPaymentCancel] = useState(false);
+  // Clipboard copy and share states
+  const [copiedShare, setCopiedShare] = useState(false);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const paymentStatus = params.get('payment');
-    
-    if (paymentStatus === 'success') {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('pending_pro_upgrade', 'true');
-      }
-      // Instantly upgrade local state so the sidebar tier badge changes to Pro without delay
-      setUser(prev => prev ? { ...prev, tier: 'pro' } : null);
-      setShowPaymentSuccess(true);
-      navigate('/dashboard', { replace: true });
-      refreshUser();
-    } else if (paymentStatus === 'cancel') {
-      navigate('/dashboard', { replace: true });
-      setShowPaymentCancel(true);
+  const handleShareClick = async () => {
+    if (!activeBriefingId) return;
+    const shareUrl = `${window.location.origin}/share/${activeBriefingId}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedShare(true);
+      setTimeout(() => setCopiedShare(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy share link:", err);
     }
-  }, [navigate, refreshUser, setUser]);
+  };
 
   // Local research and scan states
   const [isLoading, setIsLoading] = useState(false);
@@ -322,62 +314,23 @@ export default function DashboardPage() {
             ) : null}
             <span>{isExporting ? 'Exporting...' : 'Export PDF'}</span>
           </button>
+          {activeBriefingId && (
+            <button 
+              onClick={handleShareClick}
+              className="rounded-full bg-background border border-border text-foreground hover:bg-secondary px-3.5 py-1 text-[10px] font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              {copiedShare ? (
+                <Check className="h-3 w-3 text-emerald-500 shrink-0" />
+              ) : (
+                <Share2 className="h-3 w-3 text-muted-foreground shrink-0" />
+              )}
+              <span>{copiedShare ? 'Copied!' : 'Share Link'}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Payment Success Banner */}
-      {showPaymentSuccess && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 p-4 bg-emerald-500/[0.03] border border-emerald-500/20 rounded-xl flex items-start justify-between gap-4 text-[12px] font-body text-left shadow-sm"
-        >
-          <div className="flex items-start gap-3">
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0 mt-0.5">
-              <CheckCircle className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="font-semibold text-emerald-700 dark:text-emerald-400 tracking-tight">Upgrade Successful!</p>
-              <p className="mt-0.5 text-muted-foreground leading-relaxed">
-                Welcome to Briefd Professional. Your account has been upgraded to the Pro tier with unlimited research scans, premium PDF exports, and deep competitor matrix access.
-              </p>
-            </div>
-          </div>
-          <button 
-            onClick={() => setShowPaymentSuccess(false)}
-            className="text-muted-foreground hover:text-foreground transition-colors font-medium text-[11px] cursor-pointer"
-          >
-            Dismiss
-          </button>
-        </motion.div>
-      )}
 
-      {/* Payment Cancel Banner */}
-      {showPaymentCancel && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 p-4 bg-secondary border border-border/80 rounded-xl flex items-start justify-between gap-4 text-[12px] font-body text-left shadow-sm"
-        >
-          <div className="flex items-start gap-3">
-            <div className="p-1.5 rounded-lg bg-secondary text-muted-foreground shrink-0 mt-0.5">
-              <AlertCircle className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="font-semibold text-foreground tracking-tight">Checkout Cancelled</p>
-              <p className="mt-0.5 text-muted-foreground leading-relaxed">
-                The payment session was cancelled. No charges were made.
-              </p>
-            </div>
-          </div>
-          <button 
-            onClick={() => setShowPaymentCancel(false)}
-            className="text-muted-foreground hover:text-foreground transition-colors font-medium text-[11px] cursor-pointer"
-          >
-            Dismiss
-          </button>
-        </motion.div>
-      )}
 
       {/* Credit Limit / Upgrade Modal */}
       <AnimatePresence>

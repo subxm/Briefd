@@ -13,6 +13,9 @@ import SettingsPage from './pages/SettingsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import CheckoutPage from './pages/CheckoutPage';
+import SwotPage from './pages/SwotPage';
+import ComparisonPage from './pages/ComparisonPage';
+import PublicBriefingPage from './pages/PublicBriefingPage';
 
 export default function App() {
   return (
@@ -26,6 +29,7 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/share/:id" element={<PublicBriefingPage />} />
 
           {/* Protected Routes */}
           <Route path="/dashboard" element={<DashboardPage />} />
@@ -34,6 +38,8 @@ export default function App() {
           <Route path="/market-trends" element={<MarketTrendsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/swot" element={<SwotPage />} />
+          <Route path="/compare" element={<ComparisonPage />} />
 
           {/* Fallback Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />

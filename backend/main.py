@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pdf_generator import generate_briefing_pdf
 from competitors_extractor import extract_competitors_intelligence
+from swot_extractor import extract_swot_intelligence
 from pydantic import BaseModel
 import httpx
 
@@ -295,6 +296,55 @@ async def get_briefing_competitors(briefing_id: int, current_user: dict = Depend
     except Exception as e:
         logger.error(f"Failed to extract competitor intelligence: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to analyze competitors: {str(e)}")
+
+@app.get("/briefings/{briefing_id}/swot")
+async def get_briefing_swot(briefing_id: int, current_user: dict = Depends(get_current_user)):
+    """
+    Parses the briefing text to extract a structured SWOT analysis.
+    Protected by Auth.
+    """
+    briefing = await get_briefing_detail(briefing_id, current_user)
+    briefing_text = briefing.get("briefing_text", "")
+    
+    if not briefing_text:
+        raise HTTPException(status_code=404, detail="Briefing content is empty.")
+        
+    try:
+        swot_json_str = extract_swot_intelligence(briefing_text)
+        swot_data = json.loads(swot_json_str)
+        return swot_data
+    except Exception as e:
+        logger.error(f"Failed to extract SWOT intelligence: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to analyze SWOT: {str(e)}")
+
+@app.get("/public/briefings/{briefing_id}")
+async def get_public_briefing(briefing_id: int):
+    """
+    Retrieves details of a specific briefing anonymously.
+    """
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"{SUPABASE_URL}/rest/v1/briefings?id=eq.{briefing_id}",
+                headers={
+                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}"
+                }
+            )
+        except Exception as e:
+            logger.error(f"Failed to fetch public briefing detail: {e}")
+            raise HTTPException(status_code=500, detail="Database retrieval error.")
+            
+        if response.status_code != 200 or not response.json():
+            raise HTTPException(status_code=404, detail="Briefing not found.")
+            
+        data = response.json()[0]
+        return {
+            "id": data.get("id"),
+            "company_name": data.get("company_name"),
+            "briefing_text": data.get("briefing_text"),
+            "created_at": data.get("created_at")
+        }
 
 # --- RESEARCH PIPELINE ENDPOINT ---
 @app.head("/")
