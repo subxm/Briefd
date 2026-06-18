@@ -2,21 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, Check, Sparkles, 
-  HelpCircle, AlertCircle 
+  ArrowLeft, Check, AlertCircle, Lock 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
 
 export default function CheckoutPage() {
-  const { user, token, loading, refreshUser, setUser } = useAuth();
+  const { user, token, loading, refreshUser } = useAuth();
   const navigate = useNavigate();
   
-  const [utr, setUtr] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittedSuccessfully, setIsSubmittedSuccessfully] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
-  const [showGuide, setShowGuide] = useState(false);
 
   // Redirect if not logged in or if already Pro
   useEffect(() => {
@@ -28,44 +25,100 @@ export default function CheckoutPage() {
     }
   }, [user, token, loading, navigate]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleRazorpayPayment = async () => {
     setErrorMsg(null);
-
-    const cleanUtr = utr.trim();
-    if (!cleanUtr) {
-      setErrorMsg("Please enter the 12-digit UPI Transaction ID.");
-      return;
-    }
-
-    if (!/^\d{12}$/.test(cleanUtr)) {
-      setErrorMsg("Transaction ID must be exactly 12 numeric digits.");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/payments/upi-submit`, {
+      // 1. Call Backend to Create Razorpay Order (100 paise = 1 INR; Pro pricing is ₹499 = 49900 paise)
+      const response = await fetch(`${API_BASE_URL}/api/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ utr: cleanUtr }),
+        body: JSON.stringify({
+          amount: 49900,
+          currency: 'INR'
+        }),
       });
 
-      const data = await response.json();
+      const orderData = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || "Failed to submit transaction.");
+        throw new Error(orderData.detail || "Failed to initiate payment session.");
       }
 
-      setIsSubmittedSuccessfully(true);
+      // 2. Open Razorpay Checkout Modal
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Briefd",
+        description: "Lifetime Pro Upgrade",
+        order_id: orderData.order_id,
+        image: "/favicon.svg",
+        handler: async function (paymentResponse) {
+          setIsSubmitting(true);
+          try {
+            // Send payment credentials to signature verification endpoint
+            const verifyResponse = await fetch(`${API_BASE_URL}/api/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                razorpay_order_id: paymentResponse.razorpay_order_id,
+                razorpay_signature: paymentResponse.razorpay_signature
+              })
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (!verifyResponse.ok) {
+              throw new Error(verifyData.detail || "Payment verification failed.");
+            }
+
+            // Sync user state and set success
+            setIsSubmittedSuccessfully(true);
+            await refreshUser();
+          } catch (err) {
+            console.error("Verification error:", err);
+            setErrorMsg(err.message || "Something went wrong while verifying payment. Please contact support.");
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+        prefill: {
+          name: user?.name || "",
+          email: user?.email || "",
+          contact: ""
+        },
+        theme: {
+          color: "#6366f1"
+        },
+        modal: {
+          ondismiss: function () {
+            setIsSubmitting(false);
+            setErrorMsg("Payment session was cancelled. You can try again.");
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (paymentFailResponse) {
+        console.error("Razorpay Payment failed:", paymentFailResponse.error);
+        setErrorMsg(`Payment failed: ${paymentFailResponse.error.description}`);
+        setIsSubmitting(false);
+      });
+
+      rzp.open();
+
     } catch (err) {
-      console.error("Submission failed:", err);
-      setErrorMsg(err.message || "Something went wrong. Please verify your UTR and try again.");
-    } finally {
+      console.error("Payment initiation failed:", err);
+      setErrorMsg(err.message || "Failed to connect to the payment server. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -88,7 +141,7 @@ export default function CheckoutPage() {
             <div className="absolute inset-0 rounded-full border-[3px] border-t-accent border-r-accent/30 border-b-transparent border-l-transparent animate-spin"></div>
             <div className="absolute inset-0 rounded-full border-[3px] border-t-transparent border-r-transparent border-b-accent border-l-accent/20 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.7s' }}></div>
             <div className="absolute inset-0 flex items-center justify-center">
-              <Sparkles className="h-4.5 w-4.5 text-accent animate-pulse" />
+              <Lock className="h-4.5 w-4.5 text-accent animate-pulse" />
             </div>
           </div>
           <span className="text-[12px] font-semibold tracking-tight">Loading session...</span>
@@ -118,12 +171,9 @@ export default function CheckoutPage() {
             <div className="h-12 w-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="h-6 w-6" />
             </div>
-            <h1 className="text-xl font-bold text-foreground tracking-tight">Verification Pending</h1>
+            <h1 className="text-xl font-bold text-foreground tracking-tight">Upgrade Successful!</h1>
             <p className="text-[11.5px] text-muted-foreground mt-3 leading-relaxed font-body">
-              Your UPI reference ID (UTR) <strong className="font-mono">{utr}</strong> has been successfully submitted for review. 
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed font-body">
-              We are verifying your transaction. Your account will be automatically upgraded to <strong>Pro</strong> within 10–15 minutes once the bank transfer is confirmed.
+              Your payment was verified successfully. Your account has been upgraded to <strong>Pro</strong>.
             </p>
             
             <button
@@ -174,13 +224,12 @@ export default function CheckoutPage() {
         {/* Left Card: Order summary */}
         <div className="flex-grow flex-shrink basis-0 bg-background/50 border border-border backdrop-blur-md rounded-2xl p-6 md:p-8 flex flex-col justify-between text-left shadow-sm">
           <div>
-            <div className="flex items-center gap-1.5 text-accent text-xs font-semibold mb-2">
-              <Sparkles className="h-4 w-4 animate-pulse" />
+            <div className="text-accent text-[10px] font-bold tracking-wider mb-2">
               LIFETIME UPGRADE
             </div>
             <h1 className="text-xl font-bold text-foreground tracking-tight">Briefd Professional</h1>
             <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">
-              Unlock the complete competitive scanning toolkit with direct bank-to-bank settlement. No third party commissions.
+              Unlock the complete competitive scanning toolkit with instant automated payments. Access premium tools forever.
             </p>
 
             <div className="mt-8 space-y-3">
@@ -210,38 +259,25 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Right Card: UPI Form */}
+        {/* Right Card: Razorpay Checkout Form */}
         <div className="flex-grow flex-shrink basis-0 bg-background/50 border border-border backdrop-blur-md rounded-2xl p-6 md:p-8 flex flex-col justify-between text-left shadow-sm">
-          <form onSubmit={handleSubmit} className="flex-grow flex flex-col justify-between gap-6">
+          <div className="flex-grow flex flex-col justify-between gap-6">
             <div>
-              <h2 className="text-sm font-semibold tracking-tight text-foreground">Pay Direct via UPI</h2>
-              <p className="text-[10px] text-muted-foreground mt-1">Scan the QR code below to complete the transfer.</p>
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">Secure Checkout</h2>
+              <p className="text-[10px] text-muted-foreground mt-1">Upgrade your account instantly using Razorpay Checkout.</p>
 
-              {/* QR Code Container */}
-              <div className="mt-5 flex flex-col items-center gap-3">
-                <div className="bg-white p-2 rounded-xl border border-border/80 shadow-md">
-                  <img 
-                    src="/upi_qr_cropped.png" 
-                    alt="Scan UPI QR Code" 
-                    className="h-[170px] w-[170px] object-contain select-none animate-none"
-                    draggable="false"
-                  />
+              {/* Payment Graphic / Info Box */}
+              <div className="mt-8 flex flex-col items-center justify-center p-6 border border-border/60 bg-secondary/35 rounded-xl">
+                <Lock className="h-10 w-10 text-accent mb-3" />
+                <p className="text-[11px] font-semibold text-foreground">Fast & Secure Payments</p>
+                <p className="text-[9.5px] text-muted-foreground text-center mt-1">Supports Cards, UPI, Netbanking, & Wallets</p>
+                
+                {/* Visual badge simulator */}
+                <div className="flex items-center gap-2 mt-4 opacity-70">
+                  <span className="text-[8px] px-2 py-0.5 border border-border rounded font-mono uppercase bg-background font-bold tracking-wider">UPI</span>
+                  <span className="text-[8px] px-2 py-0.5 border border-border rounded font-mono uppercase bg-background font-bold tracking-wider">CARDS</span>
+                  <span className="text-[8px] px-2 py-0.5 border border-border rounded font-mono uppercase bg-background font-bold tracking-wider">NETBANKING</span>
                 </div>
-              </div>
-
-              {/* Input for UTR */}
-              <div className="mt-6">
-                <label className="block text-[11px] font-semibold text-muted-foreground mb-2">
-                  12-Digit UPI Transaction ID / UTR
-                </label>
-                <input 
-                  type="text"
-                  maxLength={12}
-                  value={utr}
-                  onChange={(e) => setUtr(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Enter 12-digit Ref Number (e.g. 345678912345)"
-                  className="w-full h-10 px-3.5 bg-background border border-border rounded-lg text-xs outline-none focus:border-accent font-medium text-foreground transition-colors placeholder:text-muted-foreground/50 tracking-wider font-mono text-center"
-                />
               </div>
 
               {/* Error messages banner */}
@@ -251,7 +287,7 @@ export default function CheckoutPage() {
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
-                    className="mt-4 p-3 bg-red-500/[0.03] border border-red-500/15 rounded-lg flex items-start gap-2.5 text-[11px] text-red-600 dark:text-red-400 font-medium text-left"
+                    className="mt-6 p-3 bg-red-500/[0.03] border border-red-500/15 rounded-lg flex items-start gap-2.5 text-[11px] text-red-600 dark:text-red-400 font-medium text-left"
                   >
                     <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>{errorMsg}</span>
@@ -261,79 +297,28 @@ export default function CheckoutPage() {
             </div>
 
             {/* Bottom Actions */}
-            <div className="space-y-3 mt-4">
+            <div className="space-y-3 mt-8">
               <button
-                type="submit"
-                disabled={isSubmitting || utr.trim().length !== 12}
+                type="button"
+                onClick={handleRazorpayPayment}
+                disabled={isSubmitting}
                 className="w-full h-10 bg-accent text-accent-foreground hover:bg-accent/90 rounded-[8px] text-xs font-semibold tracking-tight transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md animate-none"
               >
                 {isSubmitting ? (
                   <>
                     <span className="h-3.5 w-3.5 border-2 border-accent-foreground border-t-transparent rounded-full animate-spin"></span>
-                    <span>Verifying UTR...</span>
+                    <span>Processing Payment...</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span>Complete Upgrade (₹499)</span>
+                    <span>Pay Now with Razorpay (₹499)</span>
                   </>
                 )}
               </button>
-
-              <button
-                type="button"
-                onClick={() => setShowGuide(true)}
-                className="w-full flex items-center justify-center gap-1.5 text-[10.5px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                <HelpCircle className="h-3.5 w-3.5" />
-                Where can I find the UTR Number?
-              </button>
             </div>
-          </form>
+          </div>
         </div>
       </main>
-
-      {/* Guide Overlay Modal */}
-      <AnimatePresence>
-        {showGuide && (
-          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm bg-background border border-border rounded-xl p-6 shadow-dashboard text-left"
-            >
-              <h3 className="text-sm font-semibold text-foreground tracking-tight mb-4 flex items-center gap-2">
-                <HelpCircle className="h-4 w-4 text-accent" />
-                Finding UPI UTR Ref Numbers
-              </h3>
-              <div className="space-y-4 text-[10.5px] text-muted-foreground font-body leading-relaxed max-h-[350px] overflow-y-auto pr-1">
-                <div>
-                  <h4 className="font-semibold text-foreground">Google Pay (GPay):</h4>
-                  <p className="mt-0.5">Open GPay transaction history -&gt; click the payment card. Locate the 12-digit number starting with `UPI Transaction ID` or `UTR`.</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground">PhonePe:</h4>
-                  <p className="mt-0.5">Open History -&gt; select payment record. Copy the 12-digit numeric value beside the `UTR` field.</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground">Paytm:</h4>
-                  <p className="mt-0.5">Open Wallet/Transactions ledger -&gt; click transaction. Find the `UPI Ref No.` or `UTR` containing 12 numerical digits.</p>
-                </div>
-                <div className="p-3 bg-secondary rounded-lg border border-border/40 text-[10px]">
-                  <strong>Note:</strong> All UPI receipts contain a standard 12-digit transaction ID starting with the current calendar year digit. Wait for the notification and paste it in the box.
-                </div>
-              </div>
-              <button
-                onClick={() => setShowGuide(false)}
-                className="w-full h-10 mt-6 bg-secondary text-foreground hover:bg-secondary/80 rounded-[6px] text-xs font-semibold transition-all flex items-center justify-center cursor-pointer"
-              >
-                Close Guide
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

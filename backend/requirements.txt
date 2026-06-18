@@ -7,3 +7,4 @@ tavily-python
 httpx
 fpdf2
 groq
+razorpay

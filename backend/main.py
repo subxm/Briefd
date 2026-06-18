@@ -13,6 +13,9 @@ from demo_mock import is_demo_company, get_demo_briefing, get_demo_competitors, 
 from pydantic import BaseModel
 import httpx
 import asyncio
+import hmac
+import hashlib
+import razorpay
 
 # Load environment variables from .env
 load_dotenv()
@@ -27,7 +30,9 @@ required_env_vars = {
     "TAVILY_API_KEY": "Required for real-time web search and competitor indexing.",
     "SUPABASE_URL": "Required for database syncing and user profiles.",
     "SUPABASE_ANON_KEY": "Required for client-facing database operations.",
-    "SUPABASE_SERVICE_ROLE_KEY": "Required for backend bypass controls and billing calculations."
+    "SUPABASE_SERVICE_ROLE_KEY": "Required for backend bypass controls and billing calculations.",
+    "RAZORPAY_KEY_ID": "Required for Razorpay payment checkout integration.",
+    "RAZORPAY_KEY_SECRET": "Required for verifying Razorpay signatures on the backend."
 }
 
 missing_vars = []
@@ -51,6 +56,9 @@ if missing_vars:
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 
 # UPI & Admin Configuration (Optional with fallbacks)
 UPI_ID = os.getenv("UPI_ID") or "shubhamnegissn14-1@okhdfcbank"
@@ -732,6 +740,113 @@ async def admin_revoke_payment(payload: RevokePaymentRequest, current_user: dict
             raise he
         except Exception as e:
             logger.error(f"Failed to connect to database for revocation: {e}")
+            raise HTTPException(status_code=500, detail="Failed to connect to database.")
+
+
+# --- RAZORPAY PAYMENT ENDPOINTS ---
+
+class CreateOrderRequest(BaseModel):
+    amount: int
+    currency: str = "INR"
+    receipt: str = None
+
+@app.post("/api/create-order")
+async def create_order(payload: CreateOrderRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Creates a Razorpay order. Amount is specified in paise (minimum 100 paise).
+    """
+    if payload.amount < 100:
+        raise HTTPException(status_code=400, detail="Minimum amount must be at least 100 paise.")
+
+    logger.info(f"Creating Razorpay order for user: {current_user['id']}, amount: {payload.amount} paise")
+    
+    try:
+        client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+        order_data = {
+            "amount": payload.amount,
+            "currency": payload.currency,
+        }
+        if payload.receipt:
+            order_data["receipt"] = payload.receipt
+        else:
+            order_data["receipt"] = f"receipt_usr_{current_user['id'][:8]}_{int(datetime.utcnow().timestamp())}"
+            
+        order = client.order.create(data=order_data)
+        
+        return {
+            "order_id": order["id"],
+            "amount": order["amount"],
+            "currency": order["currency"]
+        }
+    except razorpay.errors.BadRequestError as e:
+        logger.error(f"Razorpay Bad Request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except razorpay.errors.ServerError as e:
+        logger.error(f"Razorpay Server Error: {e}")
+        raise HTTPException(status_code=500, detail="Razorpay server error.")
+    except Exception as e:
+        logger.error(f"Razorpay order creation unexpected failure: {e}")
+        # Detect auth failures (e.g. invalid key/secret)
+        if "auth" in str(e).lower() or "credentials" in str(e).lower() or "unauthorized" in str(e).lower():
+            raise HTTPException(status_code=401, detail="Razorpay authentication failed. Check API credentials.")
+        raise HTTPException(status_code=500, detail="Failed to create Razorpay order.")
+
+class VerifyPaymentRequest(BaseModel):
+    razorpay_payment_id: str
+    razorpay_order_id: str
+    razorpay_signature: str
+
+@app.post("/api/verify-payment")
+async def verify_payment(payload: VerifyPaymentRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Verifies Razorpay payment signature and upgrades user profile to Pro on success.
+    """
+    if not payload.razorpay_payment_id or not payload.razorpay_order_id or not payload.razorpay_signature:
+        raise HTTPException(status_code=400, detail="Missing required payment verification fields.")
+        
+    logger.info(f"Verifying Razorpay payment for user: {current_user['id']}, order_id: {payload.razorpay_order_id}")
+    
+    # 1. Cryptographic HMAC-SHA256 signature verification
+    msg = f"{payload.razorpay_order_id}|{payload.razorpay_payment_id}".encode("utf-8")
+    generated_signature = hmac.new(
+        RAZORPAY_KEY_SECRET.encode("utf-8"),
+        msg,
+        hashlib.sha256
+    ).hexdigest()
+    
+    if not hmac.compare_digest(generated_signature, payload.razorpay_signature):
+        logger.warning(f"Signature mismatch for user {current_user['id']}. Generated: {generated_signature}, Received: {payload.razorpay_signature}")
+        raise HTTPException(status_code=400, detail="Payment signature verification failed. Mismatch detected.")
+        
+    # 2. Upgrade user to 'pro' using UPSERT in Supabase
+    async with httpx.AsyncClient() as client:
+        try:
+            profile_response = await client.post(
+                f"{SUPABASE_URL}/rest/v1/profiles?on_conflict=id",
+                headers={
+                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                    "Content-Type": "application/json",
+                    "Prefer": "resolution=merge-duplicates"
+                },
+                json={
+                    "id": current_user["id"],
+                    "email": current_user["email"],
+                    "name": current_user.get("name", current_user["email"].split("@")[0]),
+                    "tier": "pro"
+                }
+            )
+            if profile_response.status_code not in [200, 201, 204]:
+                logger.error(f"Failed to upsert user profile to Pro: {profile_response.text}")
+                raise HTTPException(status_code=500, detail="Failed to update user profile in database.")
+                
+            logger.info(f"User {current_user['email']} successfully upgraded to Pro tier.")
+            return {"status": "success", "message": "Payment verified successfully. Account upgraded to Pro."}
+            
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            logger.error(f"Database error during user Pro upgrade: {e}")
             raise HTTPException(status_code=500, detail="Failed to connect to database.")
 
 

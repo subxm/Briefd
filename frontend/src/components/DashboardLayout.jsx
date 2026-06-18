@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Bell, ChevronDown, Home, 
   Settings, HelpCircle, Sparkles, LogOut,
-  FileText, Users, CheckCircle, Loader2, Activity, BarChart2
+  FileText, Users, CheckCircle, Loader2, Activity, BarChart2, Zap
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -209,57 +209,56 @@ export default function DashboardLayout({ children }) {
 
       {/* Main Body */}
       <div className="flex-1 flex overflow-hidden">
-        
-        {/* Sidebar (w-14 expandable to w-48) */}
+               {/* Sidebar (w-14 expandable to w-48) */}
         <aside className="w-14 hover:w-48 transition-all duration-300 ease-in-out border-r border-border p-2 flex flex-col justify-between select-none bg-background/50 hidden md:flex text-[12.5px] text-left group/sidebar overflow-hidden shrink-0">
           <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-1">
             <div className="space-y-1">
               <button 
                 onClick={() => navigate('/dashboard')}
-                className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
+                className={`w-full flex items-center justify-center group-hover/sidebar:justify-start px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                   activePath === '/dashboard' 
                     ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                 }`}
               >
                 <Home className={`h-4 w-4 shrink-0 ${activePath === '/dashboard' ? 'text-accent' : ''}`} />
-                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Home</span>
+                <span className="w-0 opacity-0 group-hover/sidebar:w-auto group-hover/sidebar:opacity-100 transition-all duration-300 whitespace-nowrap ml-0 group-hover/sidebar:ml-2.5 overflow-hidden font-medium">Home</span>
               </button>
               <button 
                 onClick={() => navigate('/competitors')}
-                className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
+                className={`w-full flex items-center justify-center group-hover/sidebar:justify-start px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                   activePath === '/competitors' 
                     ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                 }`}
               >
                 <Users className={`h-4 w-4 shrink-0 ${activePath === '/competitors' ? 'text-accent' : ''}`} />
-                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Competitors</span>
+                <span className="w-0 opacity-0 group-hover/sidebar:w-auto group-hover/sidebar:opacity-100 transition-all duration-300 whitespace-nowrap ml-0 group-hover/sidebar:ml-2.5 overflow-hidden font-medium">Competitors</span>
               </button>
               <button 
                 onClick={() => navigate('/swot')}
-                className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
+                className={`w-full flex items-center justify-center group-hover/sidebar:justify-start px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                   activePath === '/swot' 
                     ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                 }`}
               >
                 <Activity className={`h-4 w-4 shrink-0 ${activePath === '/swot' ? 'text-accent' : ''}`} />
-                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">SWOT Analysis</span>
+                <span className="w-0 opacity-0 group-hover/sidebar:w-auto group-hover/sidebar:opacity-100 transition-all duration-300 whitespace-nowrap ml-0 group-hover/sidebar:ml-2.5 overflow-hidden font-medium">SWOT Analysis</span>
               </button>
               <button 
                 onClick={() => navigate('/compare')}
-                className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
+                className={`w-full flex items-center justify-center group-hover/sidebar:justify-start px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                   activePath === '/compare' 
                     ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                 }`}
               >
                 <BarChart2 className={`h-4 w-4 shrink-0 ${activePath === '/compare' ? 'text-accent' : ''}`} />
-                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Compare Tools</span>
+                <span className="w-0 opacity-0 group-hover/sidebar:w-auto group-hover/sidebar:opacity-100 transition-all duration-300 whitespace-nowrap ml-0 group-hover/sidebar:ml-2.5 overflow-hidden font-medium">Compare Tools</span>
               </button>
             </div>
-
+ 
             {/* Briefings History list */}
             <div className="space-y-2 pt-2 border-t border-border/60">
               <p className="px-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Briefings History</p>
@@ -273,10 +272,10 @@ export default function DashboardLayout({ children }) {
                         navigate('/dashboard'); // Switch to home dashboard when loading history brief
                       }
                     }}
-                    className="w-full text-left flex items-center p-2 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors cursor-pointer text-[11.5px] truncate"
+                    className="w-full flex items-center justify-center group-hover/sidebar:justify-start p-2 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors cursor-pointer text-[11.5px] truncate"
                   >
                     <FileText className="h-4 w-4 text-accent/80 shrink-0" />
-                    <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5 truncate">{brief.company_name}</span>
+                    <span className="w-0 opacity-0 group-hover/sidebar:w-auto group-hover/sidebar:opacity-100 transition-all duration-300 whitespace-nowrap ml-0 group-hover/sidebar:ml-2.5 overflow-hidden truncate">{brief.company_name}</span>
                   </button>
                 ))}
                 {briefingsHistory.length === 0 && (
@@ -284,40 +283,40 @@ export default function DashboardLayout({ children }) {
                 )}
               </div>
             </div>
-
+ 
             <div className="space-y-2 pt-2 border-t border-border/60">
               <p className="px-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Feeds & Settings</p>
               <div className="space-y-1">
                 <button 
                   onClick={() => navigate('/notifications')}
-                  className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
+                  className={`w-full flex items-center justify-center group-hover/sidebar:justify-start px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                     activePath === '/notifications' 
                       ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
                       : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                   }`}
                 >
                   <Bell className={`h-4 w-4 shrink-0 ${activePath === '/notifications' ? 'text-accent' : ''}`} />
-                  <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Notifications</span>
+                  <span className="w-0 opacity-0 group-hover/sidebar:w-auto group-hover/sidebar:opacity-100 transition-all duration-300 whitespace-nowrap ml-0 group-hover/sidebar:ml-2.5 overflow-hidden font-medium">Notifications</span>
                 </button>
                 <button 
                   onClick={() => navigate('/settings')}
-                  className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
+                  className={`w-full flex items-center justify-center group-hover/sidebar:justify-start px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                     activePath === '/settings' 
                       ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
                       : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                   }`}
                 >
                   <Settings className={`h-4 w-4 shrink-0 ${activePath === '/settings' ? 'text-accent' : ''}`} />
-                  <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Settings</span>
+                  <span className="w-0 opacity-0 group-hover/sidebar:w-auto group-hover/sidebar:opacity-100 transition-all duration-300 whitespace-nowrap ml-0 group-hover/sidebar:ml-2.5 overflow-hidden font-medium">Settings</span>
                 </button>
               </div>
             </div>
           </div>
-
+ 
           <div className="space-y-2 border-t border-border/60 pt-3 shrink-0">
             {user && (
-              <div className="px-2 text-[11.5px] overflow-hidden">
-                <div className="flex items-center justify-center group-hover/sidebar:justify-between mb-1.5 min-h-[20px]">
+              <div className="text-[11.5px] overflow-hidden">
+                <div className="flex items-center justify-center group-hover/sidebar:justify-between mb-1.5 min-h-[20px] px-1">
                   <span className="text-muted-foreground opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap hidden group-hover/sidebar:inline">Tier:</span>
                   <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-semibold uppercase tracking-wider shrink-0 ${
                     user.tier === 'pro' 
@@ -328,17 +327,17 @@ export default function DashboardLayout({ children }) {
                   </span>
                 </div>
                 {user.tier !== 'pro' && (
-                  <div className="space-y-2 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 pointer-events-none group-hover/sidebar:pointer-events-auto">
-                    <div className="flex justify-between text-[10px] text-muted-foreground/85">
-                      <span>Scans today:</span>
+                  <div className="space-y-2 opacity-0 group-hover/sidebar:opacity-100 transition-all duration-300 pointer-events-none group-hover/sidebar:pointer-events-auto h-0 group-hover/sidebar:h-auto overflow-hidden px-1">
+                    <div className="flex justify-between text-[10px] text-muted-foreground/85 mt-1">
+                      <span>Scans:</span>
                       <span className="font-semibold text-foreground">{user.scans_today} / 2</span>
                     </div>
                     <button 
                       onClick={() => setShowLimitModal(true)}
-                      className="w-full py-2 bg-accent text-accent-foreground hover:bg-accent/90 rounded text-[10.5px] font-semibold transition-all cursor-pointer shadow-sm text-center flex items-center justify-center gap-1.5"
+                      className="w-full py-1.5 bg-accent text-accent-foreground hover:bg-accent/90 rounded-[6px] text-[10px] font-semibold transition-all cursor-pointer shadow-sm text-center flex items-center justify-center gap-1"
                     >
-                      <Sparkles className="h-2.5 w-2.5 animate-pulse" />
-                      <span>Upgrade Plan</span>
+                      <Zap className="h-3 w-3" />
+                      <span>Upgrade</span>
                     </button>
                   </div>
                 )}
@@ -347,10 +346,10 @@ export default function DashboardLayout({ children }) {
             
             <button 
               onClick={() => setShowSupportModal(true)}
-              className="w-full flex items-center p-2 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="w-full flex items-center justify-center group-hover/sidebar:justify-start p-2 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors cursor-pointer text-[12px]"
             >
               <HelpCircle className="h-4 w-4 shrink-0" />
-              <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Support</span>
+              <span className="w-0 opacity-0 group-hover/sidebar:w-auto group-hover/sidebar:opacity-100 transition-all duration-300 whitespace-nowrap ml-0 group-hover/sidebar:ml-2.5 overflow-hidden font-medium">Support</span>
             </button>
           </div>
         </aside>
