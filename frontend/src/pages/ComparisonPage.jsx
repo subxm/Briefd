@@ -87,9 +87,36 @@ export default function ComparisonPage() {
   // Trigger load when ids change
   useEffect(() => {
     if (baseId && compareId && user?.tier === 'pro') {
-      fetchComparisonData();
+      if (baseId === compareId) {
+        setBaseData(null);
+        setCompareData(null);
+      } else {
+        fetchComparisonData();
+      }
     }
   }, [baseId, compareId, user?.tier]);
+
+  const handleBaseChange = (e) => {
+    const newBaseId = e.target.value;
+    setBaseId(newBaseId);
+    if (newBaseId === compareId && briefingsHistory.length > 1) {
+      const other = briefingsHistory.find(b => b.id !== newBaseId);
+      if (other) {
+        setCompareId(other.id);
+      }
+    }
+  };
+
+  const handleCompareChange = (e) => {
+    const newCompareId = e.target.value;
+    setCompareId(newCompareId);
+    if (newCompareId === baseId && briefingsHistory.length > 1) {
+      const other = briefingsHistory.find(b => b.id !== newCompareId);
+      if (other) {
+        setBaseId(other.id);
+      }
+    }
+  };
 
   const handleUpgradeClick = async () => {
     setIsUpgrading(true);
@@ -229,7 +256,7 @@ export default function ComparisonPage() {
               <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Base Target Company</label>
               <select 
                 value={baseId} 
-                onChange={(e) => setBaseId(e.target.value)}
+                onChange={handleBaseChange}
                 className="w-full h-9 bg-secondary border border-border rounded-[6px] px-3 text-[11px] font-semibold outline-none focus:border-accent text-foreground cursor-pointer"
               >
                 {briefingsHistory.map(b => (
@@ -241,7 +268,7 @@ export default function ComparisonPage() {
               <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Comparison Target Company</label>
               <select 
                 value={compareId} 
-                onChange={(e) => setCompareId(e.target.value)}
+                onChange={handleCompareChange}
                 className="w-full h-9 bg-secondary border border-border rounded-[6px] px-3 text-[11px] font-semibold outline-none focus:border-accent text-foreground cursor-pointer"
               >
                 {briefingsHistory.map(b => (
@@ -251,7 +278,30 @@ export default function ComparisonPage() {
             </div>
           </div>
 
-          {isDataLoading && (
+          {baseId === compareId && (
+            <div className="bg-background rounded-lg border border-border p-8 text-center max-w-lg mx-auto mt-8 shadow-sm">
+              <div className="h-12 w-12 bg-amber-500/10 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShieldAlert className="h-6 w-6 animate-pulse" />
+              </div>
+              <h3 className="text-sm font-semibold text-foreground">Select a Different Company</h3>
+              <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed font-body">
+                {briefingsHistory.length <= 1 
+                  ? "You only have one company in your research history. Please go back to the Home page and research another company first to compare them."
+                  : "You have selected the same company for both comparison fields. Please select two different companies to benchmark them side-by-side."
+                }
+              </p>
+              {briefingsHistory.length <= 1 && (
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="mt-5 rounded-full bg-primary text-primary-foreground hover:bg-primary/95 px-4 py-1.5 text-[11px] font-medium transition-colors cursor-pointer"
+                >
+                  Research Another Company
+                </button>
+              )}
+            </div>
+          )}
+
+          {isDataLoading && baseId !== compareId && (
             <div className="flex-1 flex flex-col items-center justify-center py-20 text-center select-none text-muted-foreground w-full animate-in fade-in duration-300">
               <div className="relative h-10 w-10 shrink-0 mb-5">
                 <div className="absolute inset-0 rounded-full border-[3px] border-t-accent border-r-accent/30 border-b-transparent border-l-transparent animate-spin"></div>
@@ -264,7 +314,7 @@ export default function ComparisonPage() {
             </div>
           )}
 
-          {errorMsg && !isDataLoading && (
+          {errorMsg && !isDataLoading && baseId !== compareId && (
             <div className="p-4 bg-red-500/[0.03] border border-red-500/15 rounded-xl flex items-start gap-3.5 text-[12px] font-body text-left shadow-sm max-w-2xl w-full animate-in fade-in duration-300">
               <div className="p-1.5 rounded-lg bg-red-500/10 text-red-500 shrink-0 mt-0.5">
                 <ShieldAlert className="h-4 w-4" />
@@ -284,7 +334,7 @@ export default function ComparisonPage() {
             </div>
           )}
 
-          {baseData && compareData && !isDataLoading && (
+          {baseData && compareData && !isDataLoading && baseId !== compareId && (
             <div className="space-y-6 animate-in fade-in duration-300">
               
               {/* Profile Summaries Side-by-Side */}
