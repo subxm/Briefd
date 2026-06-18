@@ -17,7 +17,7 @@ const reframeErrorMessage = (rawError) => {
     return 'The AI research service is currently experiencing high demand. This is usually temporary. Please wait a few seconds and click Retry to resume your scan.';
   }
   if (str.includes('quota') || str.includes('limit') || str.includes('ResourceExhausted') || str.includes('exhausted')) {
-    return 'The API quota limit has been reached. Gemini request limits are currently exhausted. Please wait a minute before running another scan.';
+    return 'The API quota limit has been reached. AI request limits are currently exhausted. Please wait a minute before running another scan.';
   }
   if (str.includes('403') || str.includes('Forbidden') || str.includes('Daily limit') || str.includes('limit reached')) {
     return 'Daily competitive scan limit reached. Please upgrade to the Professional plan to run unlimited research scans.';
