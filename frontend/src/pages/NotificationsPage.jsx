@@ -101,7 +101,8 @@ export default function NotificationsPage() {
 
   return (
     <DashboardLayout>
-      {/* Header */}
+      <div className="max-w-3xl w-full mx-auto flex flex-col flex-1">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 select-none text-left text-[11px]">
         <div>
           <h2 className="text-sm font-semibold text-foreground tracking-tight">Notifications</h2>
@@ -116,7 +117,7 @@ export default function NotificationsPage() {
         </button>
       </div>
 
-      <div className="max-w-3xl space-y-4 text-left w-full">
+      <div className="max-w-3xl space-y-4 text-left w-full mx-auto">
         {/* Filters */}
         <div className="flex border-b border-border">
           {[
@@ -198,6 +199,7 @@ export default function NotificationsPage() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </DashboardLayout>
   );

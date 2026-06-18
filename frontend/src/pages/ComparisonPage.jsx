@@ -150,7 +150,8 @@ export default function ComparisonPage() {
 
   return (
     <DashboardLayout>
-      {/* Header */}
+      <div className="max-w-5xl w-full mx-auto flex flex-col flex-1">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 select-none text-left text-[11px]">
         <div>
           <h2 className="text-sm font-semibold text-foreground tracking-tight">Competitive Benchmarking</h2>
@@ -177,7 +178,7 @@ export default function ComparisonPage() {
         </div>
       ) : user.tier !== 'pro' ? (
         /* Upgrade Gate Screen */
-        <div className="relative bg-background rounded-lg border border-border p-6 md:p-8 shadow-sm overflow-hidden text-left max-w-4xl w-full">
+        <div className="relative bg-background rounded-lg border border-border p-6 md:p-8 shadow-sm overflow-hidden text-left max-w-4xl w-full mx-auto">
           <div className="absolute top-0 right-0 w-80 h-80 bg-accent/5 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
           
           <div className="flex flex-col md:flex-row gap-8 items-center relative z-10">
@@ -338,42 +339,42 @@ export default function ComparisonPage() {
             <div className="space-y-6 animate-in fade-in duration-300">
               
               {/* Profile Summaries Side-by-Side */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 {/* Base Company summary */}
-                <div className="border border-border bg-background rounded-xl p-5 space-y-3 shadow-sm text-left relative overflow-hidden">
+                <div className="border border-border bg-background rounded-2xl p-6 space-y-4 shadow-dashboard text-left relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-full blur-2xl pointer-events-none" />
-                  <div className="flex items-center justify-between border-b border-border/60 pb-2 mb-1">
-                    <h4 className="text-[12.5px] font-bold text-foreground tracking-tight">{baseData.target_company_name}</h4>
-                    <span className="px-2 py-0.5 rounded-full bg-secondary text-[8.5px] font-bold uppercase tracking-wider border border-border">Base</span>
+                  <div className="flex items-center justify-between border-b border-border/60 pb-3 mb-1">
+                    <h4 className="text-[13.5px] font-bold text-foreground tracking-tight">{baseData.target_company_name}</h4>
+                    <span className="px-2.5 py-0.5 rounded-full bg-secondary text-[9px] font-bold uppercase tracking-wider border border-border/80 text-foreground/80">Base Target</span>
                   </div>
-                  <div className="space-y-2 text-[11px]">
+                  <div className="space-y-3 text-[12px]">
                     <div>
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Core Differentiator:</span>
-                      <p className="mt-0.5 text-foreground leading-relaxed font-body">{baseData.competitors[0]?.differentiator || 'N/A'}</p>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Core Differentiator</span>
+                      <p className="mt-1 text-foreground/85 leading-relaxed font-body">{baseData.competitors[0]?.differentiator || 'N/A'}</p>
                     </div>
                     <div>
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Estimated Sizing:</span>
-                      <p className="mt-0.5 text-foreground leading-relaxed font-body">{baseData.competitors[0]?.scale || 'N/A'}</p>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Estimated Sizing</span>
+                      <p className="mt-1 text-foreground/85 leading-relaxed font-body">{baseData.competitors[0]?.scale || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Compare Company summary */}
-                <div className="border border-border bg-background rounded-xl p-5 space-y-3 shadow-sm text-left relative overflow-hidden">
+                <div className="border border-border bg-background rounded-2xl p-6 space-y-4 shadow-dashboard text-left relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-full blur-2xl pointer-events-none" />
-                  <div className="flex items-center justify-between border-b border-border/60 pb-2 mb-1">
-                    <h4 className="text-[12.5px] font-bold text-foreground tracking-tight">{compareData.target_company_name}</h4>
-                    <span className="px-2 py-0.5 rounded-full bg-accent/15 text-accent text-[8.5px] font-bold uppercase tracking-wider border border-accent/10 animate-pulse">Comparison</span>
+                  <div className="flex items-center justify-between border-b border-border/60 pb-3 mb-1">
+                    <h4 className="text-[13.5px] font-bold text-foreground tracking-tight">{compareData.target_company_name}</h4>
+                    <span className="px-2.5 py-0.5 rounded-full bg-accent/10 text-accent text-[9px] font-bold uppercase tracking-wider border border-accent/20">Comparison</span>
                   </div>
-                  <div className="space-y-2 text-[11px]">
+                  <div className="space-y-3 text-[12px]">
                     <div>
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Core Differentiator:</span>
-                      <p className="mt-0.5 text-foreground leading-relaxed font-body">{compareData.competitors[0]?.differentiator || 'N/A'}</p>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Core Differentiator</span>
+                      <p className="mt-1 text-foreground/85 leading-relaxed font-body">{compareData.competitors[0]?.differentiator || 'N/A'}</p>
                     </div>
                     <div>
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Estimated Sizing:</span>
-                      <p className="mt-0.5 text-foreground leading-relaxed font-body">{compareData.competitors[0]?.scale || 'N/A'}</p>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Estimated Sizing</span>
+                      <p className="mt-1 text-foreground/85 leading-relaxed font-body">{compareData.competitors[0]?.scale || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -381,25 +382,25 @@ export default function ComparisonPage() {
               </div>
 
               {/* Side-by-Side Competitor Lists */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 {/* Base competitors */}
-                <div className="border border-border bg-background rounded-xl p-5 space-y-3 shadow-sm text-left">
-                  <h4 className="text-[11.5px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/60 pb-2">Rivals Identified for {baseData.target_company_name}</h4>
-                  <div className="space-y-2.5">
+                <div className="border border-border bg-background rounded-2xl p-6 space-y-4 shadow-dashboard text-left">
+                  <h4 className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border/60 pb-3">Rivals Identified for {baseData.target_company_name}</h4>
+                  <div className="space-y-3">
                     {baseData.competitors.map((c, idx) => (
-                      <div key={idx} className="flex justify-between items-center p-2 rounded-lg bg-secondary/30 border border-border/50 text-[11px]">
+                      <div key={idx} className="flex justify-between items-center p-3 rounded-xl bg-secondary/25 hover:bg-secondary/40 border border-border/60 text-[12px] transition-colors duration-200">
                         <div>
-                          <p className="font-semibold text-foreground">{c.name}</p>
-                          <p className="text-[10px] text-muted-foreground font-body mt-0.5">{c.pricing_model}</p>
+                          <p className="font-bold text-foreground">{c.name}</p>
+                          <p className="text-[11px] text-muted-foreground font-body mt-1">{c.pricing_model}</p>
                         </div>
                         <div className="text-right">
-                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                             c.strength_score >= 8 
-                              ? 'bg-red-500/10 text-red-600' 
+                              ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20' 
                               : c.strength_score >= 5 
-                              ? 'bg-amber-500/10 text-amber-600' 
-                              : 'bg-emerald-500/10 text-emerald-600'
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' 
+                              : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                           }`}>
                             Threat: {c.strength_score}/10
                           </span>
@@ -410,22 +411,22 @@ export default function ComparisonPage() {
                 </div>
 
                 {/* Compare competitors */}
-                <div className="border border-border bg-background rounded-xl p-5 space-y-3 shadow-sm text-left">
-                  <h4 className="text-[11.5px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/60 pb-2">Rivals Identified for {compareData.target_company_name}</h4>
-                  <div className="space-y-2.5">
+                <div className="border border-border bg-background rounded-2xl p-6 space-y-4 shadow-dashboard text-left">
+                  <h4 className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border/60 pb-3">Rivals Identified for {compareData.target_company_name}</h4>
+                  <div className="space-y-3">
                     {compareData.competitors.map((c, idx) => (
-                      <div key={idx} className="flex justify-between items-center p-2 rounded-lg bg-secondary/30 border border-border/50 text-[11px]">
+                      <div key={idx} className="flex justify-between items-center p-3 rounded-xl bg-secondary/25 hover:bg-secondary/40 border border-border/60 text-[12px] transition-colors duration-200">
                         <div>
-                          <p className="font-semibold text-foreground">{c.name}</p>
-                          <p className="text-[10px] text-muted-foreground font-body mt-0.5">{c.pricing_model}</p>
+                          <p className="font-bold text-foreground">{c.name}</p>
+                          <p className="text-[11px] text-muted-foreground font-body mt-1">{c.pricing_model}</p>
                         </div>
                         <div className="text-right">
-                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                             c.strength_score >= 8 
-                              ? 'bg-red-500/10 text-red-600' 
+                              ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20' 
                               : c.strength_score >= 5 
-                              ? 'bg-amber-500/10 text-amber-600' 
-                              : 'bg-emerald-500/10 text-emerald-600'
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' 
+                              : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                           }`}>
                             Threat: {c.strength_score}/10
                           </span>
@@ -438,18 +439,18 @@ export default function ComparisonPage() {
               </div>
 
               {/* Aggregated capability benchmarking table */}
-              <div className="border border-border bg-background rounded-xl overflow-hidden shadow-sm text-left">
-                <div className="p-4 border-b border-border/60 bg-secondary/20">
-                  <h4 className="text-[12px] font-bold text-foreground">Consolidated Capabilities Benchmark</h4>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Direct checklist comparison of core functional features.</p>
+              <div className="border border-border bg-background rounded-2xl overflow-hidden shadow-dashboard text-left">
+                <div className="p-5 border-b border-border/60 bg-secondary/15">
+                  <h4 className="text-[13px] font-bold text-foreground">Consolidated Capabilities Benchmark</h4>
+                  <p className="text-[11px] text-muted-foreground mt-1 font-body">Direct checklist comparison of core functional features.</p>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-[11px] border-collapse">
+                  <table className="w-full text-[12px] border-collapse">
                     <thead>
-                      <tr className="bg-secondary/40 border-b border-border text-[9.5px] text-muted-foreground font-semibold uppercase tracking-wider">
-                        <th className="px-4 py-3 text-left font-semibold">Feature / Capability</th>
-                        <th className="px-4 py-3 text-center font-semibold">{baseData.target_company_name}</th>
-                        <th className="px-4 py-3 text-center font-semibold">{compareData.target_company_name}</th>
+                      <tr className="bg-secondary/35 border-b border-border text-[9.5px] text-foreground/70 font-bold uppercase tracking-wider">
+                        <th className="px-5 py-3.5 text-left font-bold">Feature / Capability</th>
+                        <th className="px-5 py-3.5 text-center font-bold">{baseData.target_company_name}</th>
+                        <th className="px-5 py-3.5 text-center font-bold">{compareData.target_company_name}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60">
@@ -463,11 +464,11 @@ export default function ComparisonPage() {
 
                         return (
                           <tr key={index} className="hover:bg-secondary/10 transition-colors">
-                            <td className="px-4 py-2.5 font-semibold text-foreground">{featName}</td>
-                            <td className="px-4 py-2.5 text-center">
+                            <td className="px-5 py-3 font-semibold text-foreground">{featName}</td>
+                            <td className="px-5 py-3 text-center">
                               {renderStatusIcon(baseFeature ? baseFeature.target_has : false)}
                             </td>
-                            <td className="px-4 py-2.5 text-center">
+                            <td className="px-5 py-3 text-center">
                               {renderStatusIcon(compareFeature ? compareFeature.target_has : false)}
                             </td>
                           </tr>
@@ -483,6 +484,7 @@ export default function ComparisonPage() {
 
         </div>
       )}
+      </div>
     </DashboardLayout>
   );
 }

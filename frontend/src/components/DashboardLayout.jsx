@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, Bell, ChevronDown, Home, 
-  LineChart, Settings, HelpCircle, Sparkles, LogOut,
+  Settings, HelpCircle, Sparkles, LogOut,
   FileText, Users, CheckCircle, Loader2, Activity, BarChart2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +21,13 @@ export default function DashboardLayout({ children }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.add('light');
+    root.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+  }, []);
 
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [supportMsg, setSupportMsg] = useState('');
@@ -92,7 +99,7 @@ export default function DashboardLayout({ children }) {
     <div className="h-screen w-screen flex flex-col bg-background text-foreground overflow-hidden font-body select-text">
       
       {/* Top Bar */}
-      <header className="h-12 border-b border-border flex items-center justify-between px-4 select-none relative z-30 bg-background shadow-sm">
+      <header className="h-12 flex items-center justify-between px-4 select-none relative z-30 bg-background">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
           <div className="h-5 w-5 bg-primary text-primary-foreground rounded flex items-center justify-center font-bold text-[10px] shrink-0">
             B
@@ -101,7 +108,7 @@ export default function DashboardLayout({ children }) {
         </div>
 
         {/* Search Bar / CMD Box */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-secondary rounded-md border border-border w-64 text-foreground text-[11px] text-left relative">
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-secondary rounded-md border border-neutral-300 dark:border-border w-[380px] text-foreground text-[11px] text-left relative focus-within:border-accent/60 shadow-sm transition-all duration-200">
           <Search className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
           <input
             ref={searchInputRef}
@@ -114,7 +121,7 @@ export default function DashboardLayout({ children }) {
             className="flex-1 bg-transparent border-0 outline-none text-foreground placeholder-muted-foreground/60 w-full text-[11px] focus:ring-0 p-0"
           />
           {!searchQuery && (
-            <kbd className="text-[9px] bg-background border border-border px-1 rounded text-muted-foreground/50 font-mono select-none">{isMac ? '⌘K' : 'Ctrl+K'}</kbd>
+            <kbd className="text-[9px] bg-background border border-border px-1.5 py-0.5 rounded text-muted-foreground/50 font-mono select-none">{isMac ? '⌘K' : 'Ctrl+K'}</kbd>
           )}
 
           {/* Search Dropdown Panel */}
@@ -122,7 +129,7 @@ export default function DashboardLayout({ children }) {
             <>
               {/* Backdrop */}
               <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsSearchFocused(false)} />
-              <div className="absolute top-8 left-0 w-64 bg-background border border-border rounded-lg shadow-dashboard p-1.5 z-50 text-left text-[11px] max-h-48 overflow-y-auto custom-scrollbar">
+              <div className="absolute top-9 left-0 w-[380px] bg-background border border-border rounded-lg shadow-dashboard p-1.5 z-50 text-left text-[11px] max-h-48 overflow-y-auto custom-scrollbar">
                 {filteredBriefings.length > 0 ? (
                   <div className="space-y-0.5">
                     <p className="px-2 py-1 text-[9px] text-muted-foreground/60 uppercase font-semibold select-none">Matching Briefings</p>
@@ -154,17 +161,9 @@ export default function DashboardLayout({ children }) {
 
         {/* Actions + Profile */}
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => {
-              navigate('/dashboard');
-            }}
-            className="px-2.5 py-1 bg-secondary border border-border text-foreground hover:bg-secondary/80 rounded-md text-[11px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
-          >
-            <span>New Research</span>
-          </button>
-          <div className="relative text-muted-foreground hover:text-foreground transition-colors cursor-pointer" onClick={() => navigate('/notifications')}>
+          <div className="relative text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-secondary" onClick={() => navigate('/notifications')}>
             <Bell className="h-3.5 w-3.5" />
-            <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 bg-accent rounded-full"></span>
+            <span className="absolute top-1 right-1 h-1.5 w-1.5 bg-accent rounded-full"></span>
           </div>
           
           {/* Avatar Dropdown */}
@@ -211,71 +210,60 @@ export default function DashboardLayout({ children }) {
       {/* Main Body */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* Sidebar (w-48) */}
-        <aside className="w-48 border-r border-border p-3 flex flex-col justify-between select-none bg-background/50 hidden md:flex text-[12.5px] text-left">
+        {/* Sidebar (w-14 expandable to w-48) */}
+        <aside className="w-14 hover:w-48 transition-all duration-300 ease-in-out border-r border-border p-2 flex flex-col justify-between select-none bg-background/50 hidden md:flex text-[12.5px] text-left group/sidebar overflow-hidden shrink-0">
           <div className="space-y-4 overflow-y-auto custom-scrollbar flex-1 pr-1">
             <div className="space-y-1">
               <button 
                 onClick={() => navigate('/dashboard')}
-                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
+                className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                   activePath === '/dashboard' 
-                    ? 'bg-secondary text-foreground font-semibold' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                    ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                 }`}
               >
-                <Home className={`h-4 w-4 ${activePath === '/dashboard' ? 'text-accent' : ''}`} />
-                <span>Home</span>
+                <Home className={`h-4 w-4 shrink-0 ${activePath === '/dashboard' ? 'text-accent' : ''}`} />
+                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Home</span>
               </button>
               <button 
                 onClick={() => navigate('/competitors')}
-                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
+                className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                   activePath === '/competitors' 
-                    ? 'bg-secondary text-foreground font-semibold' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                    ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                 }`}
               >
-                <Users className={`h-4 w-4 ${activePath === '/competitors' ? 'text-accent' : ''}`} />
-                <span>Competitors</span>
+                <Users className={`h-4 w-4 shrink-0 ${activePath === '/competitors' ? 'text-accent' : ''}`} />
+                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Competitors</span>
               </button>
               <button 
                 onClick={() => navigate('/swot')}
-                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
+                className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                   activePath === '/swot' 
-                    ? 'bg-secondary text-foreground font-semibold' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                    ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                 }`}
               >
-                <Activity className={`h-4 w-4 ${activePath === '/swot' ? 'text-accent' : ''}`} />
-                <span>SWOT Analysis</span>
+                <Activity className={`h-4 w-4 shrink-0 ${activePath === '/swot' ? 'text-accent' : ''}`} />
+                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">SWOT Analysis</span>
               </button>
               <button 
                 onClick={() => navigate('/compare')}
-                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
+                className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                   activePath === '/compare' 
-                    ? 'bg-secondary text-foreground font-semibold' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                    ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                 }`}
               >
-                <BarChart2 className={`h-4 w-4 ${activePath === '/compare' ? 'text-accent' : ''}`} />
-                <span>Compare Tools</span>
-              </button>
-              <button 
-                onClick={() => navigate('/market-trends')}
-                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
-                  activePath === '/market-trends' 
-                    ? 'bg-secondary text-foreground font-semibold' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
-                }`}
-              >
-                <LineChart className={`h-4 w-4 ${activePath === '/market-trends' ? 'text-accent' : ''}`} />
-                <span>Market Trends</span>
+                <BarChart2 className={`h-4 w-4 shrink-0 ${activePath === '/compare' ? 'text-accent' : ''}`} />
+                <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Compare Tools</span>
               </button>
             </div>
 
             {/* Briefings History list */}
             <div className="space-y-2 pt-2 border-t border-border/60">
-              <p className="px-2.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Briefings History</p>
-              <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar px-1">
+              <p className="px-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Briefings History</p>
+              <div className="space-y-1 max-h-[240px] overflow-hidden group-hover/sidebar:overflow-y-auto custom-scrollbar px-1">
                 {briefingsHistory.map((brief) => (
                   <button 
                     key={brief.id} 
@@ -285,42 +273,42 @@ export default function DashboardLayout({ children }) {
                         navigate('/dashboard'); // Switch to home dashboard when loading history brief
                       }
                     }}
-                    className="w-full text-left flex items-center gap-2 px-2 py-2 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors cursor-pointer text-[11.5px] truncate"
+                    className="w-full text-left flex items-center p-2 rounded text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors cursor-pointer text-[11.5px] truncate"
                   >
                     <FileText className="h-4 w-4 text-accent/80 shrink-0" />
-                    <span className="truncate">{brief.company_name}</span>
+                    <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5 truncate">{brief.company_name}</span>
                   </button>
                 ))}
                 {briefingsHistory.length === 0 && (
-                  <p className="px-2.5 py-1 text-[11.5px] text-muted-foreground/60 italic">No past scans.</p>
+                  <p className="px-2 py-1 text-[11.5px] text-muted-foreground/60 italic opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">No past scans.</p>
                 )}
               </div>
             </div>
 
             <div className="space-y-2 pt-2 border-t border-border/60">
-              <p className="px-2.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Feeds & Settings</p>
+              <p className="px-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Feeds & Settings</p>
               <div className="space-y-1">
                 <button 
                   onClick={() => navigate('/notifications')}
-                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
+                  className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                     activePath === '/notifications' 
-                      ? 'bg-secondary text-foreground font-semibold' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                      ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                   }`}
                 >
-                  <Bell className={`h-4 w-4 ${activePath === '/notifications' ? 'text-accent' : ''}`} />
-                  <span>Notifications</span>
+                  <Bell className={`h-4 w-4 shrink-0 ${activePath === '/notifications' ? 'text-accent' : ''}`} />
+                  <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Notifications</span>
                 </button>
                 <button 
                   onClick={() => navigate('/settings')}
-                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded transition-all cursor-pointer ${
+                  className={`w-full flex items-center px-2 py-2 rounded-lg transition-all cursor-pointer text-[12px] border ${
                     activePath === '/settings' 
-                      ? 'bg-secondary text-foreground font-semibold' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                      ? 'bg-accent/15 text-accent font-semibold border-accent/20 shadow-[0_0_12px_rgba(99,102,241,0.04)]' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40 border-transparent'
                   }`}
                 >
-                  <Settings className={`h-4 w-4 ${activePath === '/settings' ? 'text-accent' : ''}`} />
-                  <span>Settings</span>
+                  <Settings className={`h-4 w-4 shrink-0 ${activePath === '/settings' ? 'text-accent' : ''}`} />
+                  <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Settings</span>
                 </button>
               </div>
             </div>
@@ -328,10 +316,10 @@ export default function DashboardLayout({ children }) {
 
           <div className="space-y-2 border-t border-border/60 pt-3 shrink-0">
             {user && (
-              <div className="px-2.5 text-[11.5px]">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-muted-foreground">Tier:</span>
-                  <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-semibold uppercase tracking-wider ${
+              <div className="px-2 text-[11.5px] overflow-hidden">
+                <div className="flex items-center justify-center group-hover/sidebar:justify-between mb-1.5 min-h-[20px]">
+                  <span className="text-muted-foreground opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap hidden group-hover/sidebar:inline">Tier:</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[9.5px] font-semibold uppercase tracking-wider shrink-0 ${
                     user.tier === 'pro' 
                       ? 'bg-accent/15 text-accent border border-accent/20' 
                       : 'bg-secondary text-muted-foreground border border-border'
@@ -340,7 +328,7 @@ export default function DashboardLayout({ children }) {
                   </span>
                 </div>
                 {user.tier !== 'pro' && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 pointer-events-none group-hover/sidebar:pointer-events-auto">
                     <div className="flex justify-between text-[10px] text-muted-foreground/85">
                       <span>Scans today:</span>
                       <span className="font-semibold text-foreground">{user.scans_today} / 2</span>
@@ -359,10 +347,10 @@ export default function DashboardLayout({ children }) {
             
             <button 
               onClick={() => setShowSupportModal(true)}
-              className="w-full flex items-center gap-2 px-2.5 py-2 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="w-full flex items-center p-2 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
-              <HelpCircle className="h-4 w-4" />
-              <span>Support</span>
+              <HelpCircle className="h-4 w-4 shrink-0" />
+              <span className="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap ml-2.5">Support</span>
             </button>
           </div>
         </aside>

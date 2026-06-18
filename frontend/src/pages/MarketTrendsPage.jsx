@@ -190,13 +190,42 @@ const SECTORS = {
   }
 };
 
+const getSectorForCompany = (name) => {
+  if (!name) return 'ai';
+  const lower = name.toLowerCase();
+  
+  if (lower.includes('openai') || lower.includes('anthropic') || lower.includes('google') || lower.includes('meta') || lower.includes('cohere') || lower.includes('deepseek') || lower.includes('hugging') || lower.includes('llm') || lower.includes('ai') || lower.includes('mistral')) {
+    return 'ai';
+  }
+  if (lower.includes('stripe') || lower.includes('paypal') || lower.includes('adyen') || lower.includes('paytm') || lower.includes('phonepe') || lower.includes('razorpay') || lower.includes('gpay') || lower.includes('square') || lower.includes('block') || lower.includes('wise') || lower.includes('payment') || lower.includes('checkout') || lower.includes('billing')) {
+    return 'fintech';
+  }
+  if (lower.includes('amazon') || lower.includes('aws') || lower.includes('supabase') || lower.includes('vercel') || lower.includes('planetscale') || lower.includes('neon') || lower.includes('snowflake') || lower.includes('mongodb') || lower.includes('postgres') || lower.includes('db') || lower.includes('database') || lower.includes('cloudflare') || lower.includes('azure') || lower.includes('cloud')) {
+    return 'cloud';
+  }
+  if (lower.includes('notion') || lower.includes('figma') || lower.includes('slack') || lower.includes('zoom') || lower.includes('teams') || lower.includes('asana') || lower.includes('monday') || lower.includes('jira') || lower.includes('atlassian') || lower.includes('clickup') || lower.includes('linear') || lower.includes('canva') || lower.includes('adobe') || lower.includes('workspace') || lower.includes('saas') || lower.includes('college') || lower.includes('takeuforward')) {
+    return 'workspace';
+  }
+  return 'ai';
+};
+
 export default function MarketTrendsPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, companyName } = useAuth();
   const navigate = useNavigate();
 
-  const [activeSectorKey, setActiveSectorKey] = useState('ai');
+  const [activeSectorKey, setActiveSectorKey] = useState(() => {
+    return getSectorForCompany(companyName);
+  });
   const [isSectorLoading, setIsSectorLoading] = useState(false);
   const [hoveredPointIndex, setHoveredPointIndex] = useState(null);
+
+  // React to changes in global companyName context
+  useEffect(() => {
+    if (companyName) {
+      const matchingSector = getSectorForCompany(companyName);
+      setActiveSectorKey(matchingSector);
+    }
+  }, [companyName]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -212,7 +241,7 @@ export default function MarketTrendsPage() {
       setActiveSectorKey(key);
       setIsSectorLoading(false);
       setHoveredPointIndex(null);
-    }, 1000);
+    }, 600);
   };
 
   if (loading || !user) {
@@ -268,7 +297,15 @@ export default function MarketTrendsPage() {
             <span>Market Trends Agent (Active v1.2)</span>
           </h4>
           <p className="text-[10.5px] text-muted-foreground max-w-xl leading-relaxed">
-            Our dedicated Market Positioning Analyst agent scans global venture data and pricing endpoints. Select an industry sector below to trigger a real-time synthesis.
+            {companyName ? (
+              <span>
+                Market Positioning Agent has auto-matched your active target <strong className="text-accent">{companyName}</strong> to the <strong className="text-foreground">{activeSector.name}</strong> sector dashboard.
+              </span>
+            ) : (
+              <span>
+                Our dedicated Market Positioning Analyst agent scans global venture data and pricing endpoints. Select an industry sector below to trigger a real-time synthesis.
+              </span>
+            )}
           </p>
         </div>
 

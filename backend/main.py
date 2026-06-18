@@ -9,8 +9,10 @@ from fastapi.responses import StreamingResponse
 from pdf_generator import generate_briefing_pdf
 from competitors_extractor import extract_competitors_intelligence
 from swot_extractor import extract_swot_intelligence
+from demo_mock import is_demo_company, get_demo_briefing, get_demo_competitors, get_demo_swot
 from pydantic import BaseModel
 import httpx
+import asyncio
 
 # Load environment variables from .env
 load_dotenv()
@@ -282,8 +284,12 @@ async def get_briefing_competitors(briefing_id: int, current_user: dict = Depend
     Protected by Auth.
     """
     briefing = await get_briefing_detail(briefing_id, current_user)
-    briefing_text = briefing.get("briefing_text", "")
+    company_name = briefing.get("company_name", "")
     
+    if is_demo_company(company_name):
+        return get_demo_competitors(company_name)
+        
+    briefing_text = briefing.get("briefing_text", "")
     if not briefing_text:
         raise HTTPException(status_code=404, detail="Briefing content is empty.")
         
@@ -304,8 +310,12 @@ async def get_briefing_swot(briefing_id: int, current_user: dict = Depends(get_c
     Protected by Auth.
     """
     briefing = await get_briefing_detail(briefing_id, current_user)
-    briefing_text = briefing.get("briefing_text", "")
+    company_name = briefing.get("company_name", "")
     
+    if is_demo_company(company_name):
+        return get_demo_swot(company_name)
+        
+    briefing_text = briefing.get("briefing_text", "")
     if not briefing_text:
         raise HTTPException(status_code=404, detail="Briefing content is empty.")
         
@@ -367,65 +377,95 @@ async def research(request: ResearchRequest, current_user: dict = Depends(get_cu
         
     user_id = current_user["id"]
     tier = current_user.get("tier", "free")
-    scans_today = current_user.get("scans_today", 0)
-    last_scan_date = current_user.get("last_scan_date", "")
-    total_scans = current_user.get("total_scans", 0)
     
-    today_str = datetime.utcnow().date().isoformat()
+    is_demo = is_demo_company(request.company)
     
-    # Reset daily limit count if it's a new day
-    if last_scan_date != today_str:
-        scans_today = 0
-        last_scan_date = today_str
+    if not is_demo:
+        scans_today = current_user.get("scans_today", 0)
+        last_scan_date = current_user.get("last_scan_date", "")
+        total_scans = current_user.get("total_scans", 0)
         
-    # Check limit for Free tier
-    if tier == "free" and scans_today >= 2:
-        raise HTTPException(
-            status_code=403,
-            detail="Daily limit reached. Free Starter tier is limited to 2 briefings per day. Upgrade to Professional for unlimited credits."
-        )
+        today_str = datetime.utcnow().date().isoformat()
         
-    # Increment counters
-    scans_today += 1
-    total_scans += 1
-    
-    # Save incremented counts to Supabase
-    async with httpx.AsyncClient() as client:
-        try:
-            update_response = await client.patch(
-                f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{user_id}",
-                headers={
-                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
-                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "scans_today": scans_today,
-                    "last_scan_date": last_scan_date,
-                    "total_scans": total_scans
-                }
-            )
-            if update_response.status_code not in [200, 201, 204]:
-                logger.error(f"Failed to update scan counter in database: {update_response.text}")
-        except Exception as e:
-            logger.error(f"Failed to submit scan counter update: {e}")
+        # Reset daily limit count if it's a new day
+        if last_scan_date != today_str:
+            scans_today = 0
+            last_scan_date = today_str
             
+        # Check limit for Free tier
+        if tier == "free" and scans_today >= 2:
+            raise HTTPException(
+                status_code=403,
+                detail="Daily limit reached. Free Starter tier is limited to 2 briefings per day. Upgrade to Professional for unlimited credits."
+            )
+            
+        # Increment counters
+        scans_today += 1
+        total_scans += 1
+        
+        # Save incremented counts to Supabase
+        async with httpx.AsyncClient() as client:
+            try:
+                update_response = await client.patch(
+                    f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{user_id}",
+                    headers={
+                        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "scans_today": scans_today,
+                        "last_scan_date": last_scan_date,
+                        "total_scans": total_scans
+                    }
+                )
+                if update_response.status_code not in [200, 201, 204]:
+                    logger.error(f"Failed to update scan counter in database: {update_response.text}")
+            except Exception as e:
+                logger.error(f"Failed to submit scan counter update: {e}")
+                
     logger.info(f"Initiating competitive research pipeline for: {request.company} by user: {current_user['email']}")
     
     async def sse_wrapper():
         company_name = request.company.strip()
         briefing_text = ""
-        async for chunk in run_research_pipeline(company_name):
-            yield chunk
-            if "event: complete" in chunk:
-                for line in chunk.split("\n"):
-                    if line.startswith("data:"):
-                        try:
-                            data = json.loads(line[5:])
-                            briefing_text = data.get("briefing", "")
-                        except Exception as e:
-                            logger.error(f"Error parsing final briefing json from SSE: {e}")
-                            
+        
+        if is_demo_company(company_name):
+            # Stream simulated progress status updates for onboarding
+            yield f"event: agent_start\ndata: {json.dumps({'agent': 1, 'name': 'Company Researcher'})}\n\n"
+            await asyncio.sleep(0.4)
+            yield f"event: agent_done\ndata: {json.dumps({'agent': 1, 'result': 'Mock Researcher Done'})}\n\n"
+            await asyncio.sleep(0.2)
+            
+            yield f"event: agent_start\ndata: {json.dumps({'agent': 2, 'name': 'Competitor Finder'})}\n\n"
+            await asyncio.sleep(0.4)
+            yield f"event: agent_done\ndata: {json.dumps({'agent': 2, 'result': 'Mock Competitor Done'})}\n\n"
+            await asyncio.sleep(0.2)
+
+            yield f"event: agent_start\ndata: {json.dumps({'agent': 3, 'name': 'Positioning Analyst'})}\n\n"
+            await asyncio.sleep(0.4)
+            yield f"event: agent_done\ndata: {json.dumps({'agent': 3, 'result': 'Mock Analyst Done'})}\n\n"
+            await asyncio.sleep(0.2)
+
+            yield f"event: agent_start\ndata: {json.dumps({'agent': 4, 'name': 'Briefing Writer'})}\n\n"
+            await asyncio.sleep(0.4)
+            yield f"event: agent_done\ndata: {json.dumps({'agent': 4, 'result': 'Mock Writer Done'})}\n\n"
+            await asyncio.sleep(0.2)
+            
+            briefing_text = get_demo_briefing(company_name)
+            yield f"event: complete\ndata: {json.dumps({'briefing': briefing_text})}\n\n"
+        else:
+            async for chunk in run_research_pipeline(company_name):
+                yield chunk
+                if "event: complete" in chunk:
+                    for line in chunk.split("\n"):
+                        if line.startswith("data:"):
+                            try:
+                                data = json.loads(line[5:])
+                                briefing_text = data.get("briefing", "")
+                            except Exception as e:
+                                logger.error(f"Error parsing final briefing json from SSE: {e}")
+                                
         # Persist completed briefing report to Supabase briefings table
         if briefing_text:
             async with httpx.AsyncClient() as client:

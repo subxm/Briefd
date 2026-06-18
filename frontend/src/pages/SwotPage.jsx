@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Sparkles, Lock, Loader2, ShieldAlert, Check,
-  Activity, ArrowRight, Award, Plus
+  Activity, ArrowRight, Award, Plus, TrendingUp, AlertCircle, Zap, AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
@@ -50,7 +50,8 @@ export default function SwotPage() {
   // Fetch SWOT data when activeBriefingId changes and user is Pro
   useEffect(() => {
     const fetchSwot = async () => {
-      if (!token || !activeBriefingId || user?.tier !== 'pro') {
+      const isDemo = companyName && companyName.toLowerCase().includes('(demo)');
+      if (!token || !activeBriefingId || (user?.tier !== 'pro' && !isDemo)) {
         setSwotData(null);
         return;
       }
@@ -107,7 +108,8 @@ export default function SwotPage() {
 
   return (
     <DashboardLayout>
-      {/* Header */}
+      <div className="max-w-5xl w-full mx-auto flex flex-col flex-1">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 select-none text-left text-[11px]">
         <div>
           <h2 className="text-sm font-semibold text-foreground tracking-tight">SWOT Analysis Matrix</h2>
@@ -134,9 +136,9 @@ export default function SwotPage() {
             Go to Search Panel
           </button>
         </div>
-      ) : user.tier !== 'pro' ? (
+      ) : (user.tier !== 'pro' && !(companyName && companyName.toLowerCase().includes('(demo)'))) ? (
         /* Upgrade Gate Screen */
-        <div className="relative bg-background rounded-lg border border-border p-6 md:p-8 shadow-sm overflow-hidden text-left max-w-4xl w-full">
+        <div className="relative bg-background rounded-lg border border-border p-6 md:p-8 shadow-sm overflow-hidden text-left max-w-4xl w-full mx-auto">
           <div className="absolute top-0 right-0 w-80 h-80 bg-accent/5 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
           
           <div className="flex flex-col md:flex-row gap-8 items-center relative z-10">
@@ -267,78 +269,99 @@ export default function SwotPage() {
             <div className="space-y-6 animate-in fade-in duration-300">
               
               {/* Executive Summary Card */}
-              <div className="p-5 border border-border bg-background rounded-xl shadow-sm text-left">
-                <h4 className="text-[12.5px] font-bold text-foreground flex items-center gap-1.5 border-b border-border/60 pb-2 mb-3">
+              <div className="p-6 border border-border bg-background rounded-2xl shadow-dashboard text-left relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+                <h4 className="text-[13.5px] font-bold text-foreground flex items-center gap-1.5 border-b border-border/60 pb-3 mb-4">
                   <Sparkles className="h-4 w-4 text-accent animate-pulse" />
-                  <span>Strategic Executive Summary</span>
+                  <span className="font-semibold">Strategic Executive Summary</span>
                 </h4>
-                <p className="text-[11.5px] text-muted-foreground leading-relaxed font-body">
+                <p className="text-[12px] text-foreground/80 leading-relaxed font-body">
                   {swotData.executive_summary}
                 </p>
               </div>
 
               {/* SWOT 2x2 Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 {/* Strengths Card */}
-                <div className="border border-emerald-500/15 bg-emerald-500/[0.02] rounded-xl p-5 space-y-3 shadow-sm">
-                  <div className="flex items-center gap-2 border-b border-emerald-500/10 pb-2">
-                    <span className="h-5 w-5 rounded-md bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-[11px]">S</span>
-                    <h4 className="text-[12px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Strengths</h4>
+                <div className="group border border-emerald-500/15 bg-emerald-500/[0.01] hover:bg-emerald-500/[0.02] hover:border-emerald-500/30 rounded-2xl p-6 space-y-4 shadow-sm hover:translate-y-[-2px] transition-all duration-300">
+                  <div className="flex items-center justify-between border-b border-emerald-500/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                      </div>
+                      <h4 className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Strengths</h4>
+                    </div>
+                    <span className="text-[9.5px] font-semibold text-emerald-600/70 dark:text-emerald-400/50 uppercase tracking-wider font-mono">Internal Assets</span>
                   </div>
-                  <ul className="space-y-2.5">
+                  <ul className="space-y-3">
                     {swotData.strengths.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-[11px] text-muted-foreground">
-                        <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                        <span className="leading-relaxed font-body">{item}</span>
+                      <li key={idx} className="flex items-start gap-2.5 text-[11.5px] text-muted-foreground">
+                        <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span className="leading-relaxed font-body text-foreground/80">{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 {/* Weaknesses Card */}
-                <div className="border border-red-500/15 bg-red-500/[0.02] rounded-xl p-5 space-y-3 shadow-sm">
-                  <div className="flex items-center gap-2 border-b border-red-500/10 pb-2">
-                    <span className="h-5 w-5 rounded-md bg-red-500/10 text-red-600 flex items-center justify-center font-bold text-[11px]">W</span>
-                    <h4 className="text-[12px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Weaknesses</h4>
+                <div className="group border border-red-500/15 bg-red-500/[0.01] hover:bg-red-500/[0.02] hover:border-red-500/30 rounded-2xl p-6 space-y-4 shadow-sm hover:translate-y-[-2px] transition-all duration-300">
+                  <div className="flex items-center justify-between border-b border-red-500/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-red-500/10 text-red-600 flex items-center justify-center font-bold">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                      </div>
+                      <h4 className="text-[12px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Weaknesses</h4>
+                    </div>
+                    <span className="text-[9.5px] font-semibold text-red-600/70 dark:text-red-400/50 uppercase tracking-wider font-mono">Internal Limits</span>
                   </div>
-                  <ul className="space-y-2.5">
+                  <ul className="space-y-3">
                     {swotData.weaknesses.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-[11px] text-muted-foreground">
-                        <ShieldAlert className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />
-                        <span className="leading-relaxed font-body">{item}</span>
+                      <li key={idx} className="flex items-start gap-2.5 text-[11.5px] text-muted-foreground">
+                        <ShieldAlert className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                        <span className="leading-relaxed font-body text-foreground/80">{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 {/* Opportunities Card */}
-                <div className="border border-blue-500/15 bg-blue-500/[0.02] rounded-xl p-5 space-y-3 shadow-sm">
-                  <div className="flex items-center gap-2 border-b border-blue-500/10 pb-2">
-                    <span className="h-5 w-5 rounded-md bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-[11px]">O</span>
-                    <h4 className="text-[12px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Opportunities</h4>
+                <div className="group border border-blue-500/15 bg-blue-500/[0.01] hover:bg-blue-500/[0.02] hover:border-blue-500/30 rounded-2xl p-6 space-y-4 shadow-sm hover:translate-y-[-2px] transition-all duration-300">
+                  <div className="flex items-center justify-between border-b border-blue-500/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
+                        <Zap className="h-3.5 w-3.5" />
+                      </div>
+                      <h4 className="text-[12px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Opportunities</h4>
+                    </div>
+                    <span className="text-[9.5px] font-semibold text-blue-600/70 dark:text-blue-400/50 uppercase tracking-wider font-mono">External Growth</span>
                   </div>
-                  <ul className="space-y-2.5">
+                  <ul className="space-y-3">
                     {swotData.opportunities.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-[11px] text-muted-foreground">
-                        <Plus className="h-3.5 w-3.5 text-blue-600 shrink-0 mt-0.5" />
-                        <span className="leading-relaxed font-body">{item}</span>
+                      <li key={idx} className="flex items-start gap-2.5 text-[11.5px] text-muted-foreground">
+                        <Plus className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                        <span className="leading-relaxed font-body text-foreground/80">{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 {/* Threats Card */}
-                <div className="border border-amber-500/15 bg-amber-500/[0.02] rounded-xl p-5 space-y-3 shadow-sm">
-                  <div className="flex items-center gap-2 border-b border-amber-500/10 pb-2">
-                    <span className="h-5 w-5 rounded-md bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-[11px]">T</span>
-                    <h4 className="text-[12px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Threats</h4>
+                <div className="group border border-amber-500/15 bg-amber-500/[0.01] hover:bg-amber-500/[0.02] hover:border-amber-500/30 rounded-2xl p-6 space-y-4 shadow-sm hover:translate-y-[-2px] transition-all duration-300">
+                  <div className="flex items-center justify-between border-b border-amber-500/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                      </div>
+                      <h4 className="text-[12px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Threats</h4>
+                    </div>
+                    <span className="text-[9.5px] font-semibold text-amber-600/70 dark:text-amber-400/50 uppercase tracking-wider font-mono">External Risks</span>
                   </div>
-                  <ul className="space-y-2.5">
+                  <ul className="space-y-3">
                     {swotData.threats.map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-[11px] text-muted-foreground">
-                        <ShieldAlert className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
-                        <span className="leading-relaxed font-body">{item}</span>
+                      <li key={idx} className="flex items-start gap-2.5 text-[11.5px] text-muted-foreground">
+                        <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                        <span className="leading-relaxed font-body text-foreground/80">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -350,6 +373,7 @@ export default function SwotPage() {
           )}
         </div>
       )}
+      </div>
     </DashboardLayout>
   );
 }

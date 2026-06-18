@@ -63,7 +63,8 @@ export default function CompetitorsPage() {
   // Fetch competitor intelligence when activeBriefingId changes and user is Pro
   useEffect(() => {
     const fetchCompetitors = async () => {
-      if (!token || !activeBriefingId || user?.tier !== 'pro') {
+      const isDemo = companyName && companyName.toLowerCase().includes('(demo)');
+      if (!token || !activeBriefingId || (user?.tier !== 'pro' && !isDemo)) {
         setMatrixData(null);
         return;
       }
@@ -133,7 +134,8 @@ export default function CompetitorsPage() {
 
   return (
     <DashboardLayout>
-      {/* Header */}
+      <div className="max-w-5xl w-full mx-auto flex flex-col flex-1">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 select-none text-left text-[11px]">
         <div>
           <h2 className="text-sm font-semibold text-foreground tracking-tight">Competitor Intelligence</h2>
@@ -160,16 +162,16 @@ export default function CompetitorsPage() {
             Go to Search Panel
           </button>
         </div>
-      ) : user.tier !== 'pro' ? (
+      ) : (user.tier !== 'pro' && !(companyName && companyName.toLowerCase().includes('(demo)'))) ? (
         /* Upgrade Gate Screen */
-        <div className="relative bg-background rounded-lg border border-border p-6 md:p-8 shadow-sm overflow-hidden text-left max-w-4xl w-full">
+        <div className="relative bg-glass border-glass rounded-2xl p-6 md:p-8 shadow-dashboard overflow-hidden text-left max-w-4xl w-full mx-auto">
           {/* Subtle Background Glow */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-accent/5 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
           
           <div className="flex flex-col md:flex-row gap-8 items-center relative z-10">
             <div className="flex-1 space-y-4">
               <div className="h-10 w-10 bg-accent/15 text-accent rounded-full flex items-center justify-center">
-                <Lock className="h-5 w-5" />
+                <Lock className="h-5 w-5 animate-pulse" />
               </div>
               <h3 className="text-base font-semibold text-foreground tracking-tight">
                 Unlock Competitor Threat Profiling & Feature Matrix
@@ -197,14 +199,14 @@ export default function CompetitorsPage() {
                 <button
                   onClick={handleUpgradeClick}
                   disabled={isUpgrading}
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-[6px] px-5 py-2.5 text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-[6px] px-5 py-2.5 text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <Sparkles className="h-4 w-4 shrink-0" />
                   <span>{isUpgrading ? 'Upgrading...' : 'Upgrade to Professional (₹499)'}</span>
                 </button>
                 <button
                   onClick={() => navigate('/dashboard')}
-                  className="bg-secondary text-foreground hover:bg-secondary/80 rounded-[6px] px-5 py-2.5 text-xs font-medium transition-all cursor-pointer text-center"
+                  className="bg-secondary text-foreground hover:bg-secondary/80 rounded-[6px] px-5 py-2.5 text-xs font-medium transition-all cursor-pointer text-center hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Return to Briefing
                 </button>
@@ -212,35 +214,35 @@ export default function CompetitorsPage() {
             </div>
 
             {/* Blurred Mock UI Side */}
-            <div className="w-full md:w-80 shrink-0 border border-border bg-secondary/30 rounded-xl p-4 blur-[2.5px] select-none pointer-events-none relative">
-              <div className="absolute inset-0 bg-background/20 z-10 flex items-center justify-center">
-                <span className="bg-background/90 border border-border px-3 py-1.5 rounded-full text-[10px] font-semibold text-muted-foreground flex items-center gap-1 shadow-md">
+            <div className="w-full md:w-80 shrink-0 border-glass bg-secondary/35 rounded-xl p-4 blur-[1.5px] select-none pointer-events-none relative shadow-inner">
+              <div className="absolute inset-0 bg-background/25 z-10 flex items-center justify-center">
+                <span className="bg-background/90 border-glass px-3 py-1.5 rounded-full text-[10px] font-semibold text-muted-foreground flex items-center gap-1 shadow-md">
                   <Lock className="h-3 w-3 text-accent" /> Premium Feature
                 </span>
               </div>
               
               <div className="space-y-3">
-                <div className="h-4 w-24 bg-border rounded" />
-                <div className="h-1.5 w-full bg-border rounded" />
+                <div className="h-4 w-24 bg-muted rounded" />
+                <div className="h-1.5 w-full bg-muted rounded" />
                 
-                <div className="border border-border bg-background rounded-lg p-3 space-y-2">
+                <div className="border-glass bg-background/50 rounded-lg p-3 space-y-2">
                   <div className="flex justify-between items-center">
-                    <div className="h-3.5 w-16 bg-border rounded" />
+                    <div className="h-3.5 w-16 bg-muted rounded" />
                     <div className="h-4 w-10 bg-accent/20 rounded-full" />
                   </div>
-                  <div className="h-1.5 w-full bg-border rounded" />
+                  <div className="h-1.5 w-full bg-muted rounded" />
                   <div className="grid grid-cols-2 gap-2 pt-1">
-                    <div className="h-6 bg-secondary rounded" />
-                    <div className="h-6 bg-secondary rounded" />
+                    <div className="h-6 bg-secondary/40 rounded" />
+                    <div className="h-6 bg-secondary/40 rounded" />
                   </div>
                 </div>
 
-                <div className="border border-border bg-background rounded-lg p-3 space-y-2">
+                <div className="border-glass bg-background/50 rounded-lg p-3 space-y-2">
                   <div className="flex justify-between items-center">
-                    <div className="h-3.5 w-14 bg-border rounded" />
+                    <div className="h-3.5 w-14 bg-muted rounded" />
                     <div className="h-4 w-10 bg-accent/20 rounded-full" />
                   </div>
-                  <div className="h-1.5 w-3/4 bg-border rounded" />
+                  <div className="h-1.5 w-3/4 bg-muted rounded" />
                 </div>
               </div>
             </div>
@@ -287,9 +289,7 @@ export default function CompetitorsPage() {
                 </div>
               </div>
             </div>
-          )}
-
-          {matrixData && (
+          )}          {matrixData && (
             <>
               {/* Competitor Threat Profiles Section */}
               <div className="text-left space-y-4">
@@ -298,61 +298,81 @@ export default function CompetitorsPage() {
                   <span>Competitor Threat Profiles</span>
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {matrixData.competitors?.map((competitor, idx) => (
                     <div 
                       key={idx}
-                      className="bg-background border border-border hover:border-slate-400/80 rounded-xl p-5 shadow-sm space-y-4 transition-all"
+                      className="bg-glass border-glass hover:border-accent/45 rounded-2xl p-6 shadow-dashboard space-y-5 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 relative overflow-hidden"
                     >
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-accent/5 rounded-full blur-2xl pointer-events-none" />
+                      
                       {/* Name, scale and pricing */}
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start justify-between gap-3">
                         <div>
-                          <h4 className="text-[13px] font-bold text-foreground">{competitor.name}</h4>
-                          <p className="text-[11px] text-muted-foreground/90 mt-0.5">
+                          <h4 className="text-[13.5px] font-bold text-foreground tracking-tight">{competitor.name}</h4>
+                          <p className="text-[11.5px] text-muted-foreground mt-1 font-body">
                             {competitor.scale} • {competitor.pricing_model}
                           </p>
                         </div>
-                        <div className="bg-accent/10 text-accent text-[9px] font-semibold px-2.5 py-0.5 rounded-full border border-accent/10">
-                          Threat Score: {competitor.strength_score}/10
-                        </div>
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
+                          competitor.strength_score >= 8 
+                            ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/15' 
+                            : competitor.strength_score >= 5 
+                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/15' 
+                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/15'
+                        }`}>
+                          Threat: {competitor.strength_score}/10
+                        </span>
                       </div>
 
                       {/* Threat Score Progress bar */}
-                      <div className="space-y-1">
-                        <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-[10px] font-bold text-muted-foreground uppercase tracking-wider select-none">
+                          <span className="flex items-center gap-1">
+                            <ShieldAlert className="h-3 w-3 text-muted-foreground/80" />
+                            <span>Threat Level Score</span>
+                          </span>
+                        </div>
+                        <div className="h-2 w-full bg-secondary border border-border/40 rounded-full overflow-hidden relative">
                           <div 
-                            className="h-full bg-accent rounded-full transition-all duration-500" 
+                            className={`h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden ${
+                              competitor.strength_score >= 8 
+                                ? 'bg-gradient-to-r from-red-500 to-rose-600 shadow-[0_0_8px_rgba(244,63,94,0.4)]' 
+                                : competitor.strength_score >= 5 
+                                ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]' 
+                                : 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
+                            } animate-shimmer`}
                             style={{ width: `${(competitor.strength_score || 0) * 10}%` }}
                           />
                         </div>
                       </div>
 
                       {/* Differentiator */}
-                      <div className="text-[11.5px] bg-secondary/40 border border-border/60 rounded px-2.5 py-1.5 italic text-muted-foreground/95">
-                        <span className="font-semibold text-foreground/80 not-italic block mb-0.5 text-[10px]">Core Differentiator</span>
+                      <div className="text-[12px] bg-secondary/35 border border-border/50 rounded-xl px-4 py-2.5 italic text-foreground/80 leading-relaxed font-body">
+                        <span className="font-bold text-foreground/90 not-italic block mb-1 text-[10px] uppercase tracking-wider">Core Differentiator</span>
                         "{competitor.differentiator}"
                       </div>
 
                       {/* Strengths & Weaknesses lists */}
-                      <div className="grid grid-cols-2 gap-4 pt-1">
-                        <div className="space-y-1.5 text-left">
-                          <h5 className="text-[10px] font-semibold text-foreground/80 uppercase tracking-wider">Key Strengths</h5>
-                          <ul className="space-y-1">
+                      <div className="grid grid-cols-2 gap-5 pt-1">
+                        <div className="space-y-2 text-left">
+                          <h5 className="text-[10px] font-bold text-foreground/80 uppercase tracking-wider">Key Strengths</h5>
+                          <ul className="space-y-1.5">
                             {competitor.strengths?.map((str, sIdx) => (
-                              <li key={sIdx} className="text-[11px] text-muted-foreground/95 flex items-start gap-1">
+                              <li key={sIdx} className="text-[11.5px] text-muted-foreground flex items-start gap-1.5 font-body leading-normal">
                                 <span className="text-emerald-500 font-bold shrink-0">•</span>
-                                <span className="leading-normal">{str}</span>
+                                <span>{str}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
-                        <div className="space-y-1.5 text-left">
-                          <h5 className="text-[10px] font-semibold text-foreground/80 uppercase tracking-wider">Key Weaknesses</h5>
-                          <ul className="space-y-1">
+                        <div className="space-y-2 text-left">
+                          <h5 className="text-[10px] font-bold text-foreground/80 uppercase tracking-wider">Key Weaknesses</h5>
+                          <ul className="space-y-1.5">
                             {competitor.weaknesses?.map((weak, wIdx) => (
-                              <li key={wIdx} className="text-[11px] text-muted-foreground/95 flex items-start gap-1">
+                              <li key={wIdx} className="text-[11.5px] text-muted-foreground flex items-start gap-1.5 font-body leading-normal">
                                 <span className="text-red-500 font-bold shrink-0">•</span>
-                                <span className="leading-normal">{weak}</span>
+                                <span>{weak}</span>
                               </li>
                             ))}
                           </ul>
@@ -371,27 +391,27 @@ export default function CompetitorsPage() {
                     <span>Capability Check & Feature Matrix</span>
                   </h3>
                   
-                  <div className="border border-border rounded-xl overflow-hidden shadow-sm bg-background">
+                  <div className="border border-border rounded-2xl overflow-hidden shadow-dashboard bg-background">
                     <div className="overflow-x-auto custom-scrollbar">
                       <table className="min-w-full divide-y divide-border text-left">
-                        <thead className="bg-secondary/40 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider select-none">
+                        <thead className="bg-secondary/40 text-[10px] font-bold text-foreground/80 uppercase tracking-wider select-none">
                           <tr>
-                            <th className="px-4 py-3 min-w-[150px]">Feature / Capability</th>
-                            <th className="px-4 py-3 text-center bg-accent/5 text-foreground font-bold">
+                            <th className="px-5 py-3.5 min-w-[150px] font-bold">Feature / Capability</th>
+                            <th className="px-5 py-3.5 text-center bg-accent/5 text-foreground font-bold">
                               {matrixData.target_company_name || 'Target Company'}
                             </th>
                             {matrixData.competitors?.map((comp, idx) => (
-                              <th key={idx} className="px-4 py-3 text-center min-w-[120px]">{comp.name}</th>
+                              <th key={idx} className="px-5 py-3.5 text-center min-w-[120px] font-bold">{comp.name}</th>
                             ))}
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-border text-[11px] text-muted-foreground">
+                        <tbody className="divide-y divide-border text-[12px] text-muted-foreground font-medium">
                           {matrixData.key_features.map((feature, fIdx) => (
-                            <tr key={fIdx} className="hover:bg-secondary/20 transition-colors">
-                              <td className="px-4 py-3 font-semibold text-foreground/90">{feature.feature_name}</td>
+                            <tr key={fIdx} className="hover:bg-secondary/15 transition-colors">
+                              <td className="px-5 py-3 font-semibold text-foreground/90">{feature.feature_name}</td>
                               
                               {/* Target Has Column */}
-                              <td className="px-4 py-3 text-center bg-accent/5">
+                              <td className="px-5 py-3 text-center bg-accent/5">
                                 {renderStatusIcon(feature.target_has)}
                               </td>
                               
@@ -401,7 +421,7 @@ export default function CompetitorsPage() {
                                   (s) => s.competitor_name.toLowerCase() === comp.name.toLowerCase()
                                 );
                                 return (
-                                  <td key={cIdx} className="px-4 py-3 text-center">
+                                  <td key={cIdx} className="px-5 py-3 text-center">
                                     {renderStatusIcon(state ? state.has : false)}
                                   </td>
                                 );
@@ -418,6 +438,7 @@ export default function CompetitorsPage() {
           )}
         </div>
       )}
+      </div>
     </DashboardLayout>
   );
 }

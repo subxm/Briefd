@@ -234,7 +234,8 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      {/* Header */}
+      <div className="max-w-4xl w-full mx-auto flex flex-col flex-1">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 select-none text-left text-[11px]">
         <div>
           <h2 className="text-sm font-semibold text-foreground tracking-tight">Settings</h2>
@@ -242,7 +243,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="max-w-4xl flex flex-col md:flex-row gap-6 text-left w-full">
+      <div className="max-w-4xl flex flex-col md:flex-row gap-6 text-left w-full mx-auto">
         {/* Navigation Tabs (Vertical) */}
         <div className="w-full md:w-48 shrink-0 flex flex-row md:flex-col gap-1 border-b md:border-b-0 md:border-r border-border pb-4 md:pb-0 md:pr-4">
           {(() => {
@@ -606,6 +607,7 @@ print(response.json())`}
             </div>
           )}
         </div>
+      </div>
       </div>
     </DashboardLayout>
   );

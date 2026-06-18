@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, AlertCircle, CheckCircle, Share2, Check } from 'lucide-react';
+import { Sparkles, AlertCircle, CheckCircle, Share2, Check, Globe, Target, BarChart2, FileText, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../config';
 import SearchBar from '../components/SearchBar';
@@ -426,24 +426,57 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       {/* Research Panel Container */}
-      <div className="bg-background rounded-lg border border-border p-4 md:p-5 flex flex-col gap-6 shadow-sm">
+      <div className="bg-background rounded-lg border border-border p-4 md:p-5 flex flex-col gap-5 shadow-sm">
         
-        {/* Tool Header */}
-        <div className="flex items-start justify-between border-b border-border/60 pb-3 text-left">
-          <div>
-            <h3 className="text-[13px] font-semibold text-foreground flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span>Competitive Research Multi-Agent Toolkit</span>
-            </h3>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              Run 4 agents sequentially to synthesize intelligence on your target company.
-            </p>
-          </div>
-        </div>
-
         {/* Search Input */}
         <div className="w-full">
           <SearchBar onSubmit={handleResearchSubmit} isLoading={isLoading} />
+        </div>
+
+        {/* Onboarding Guide for new users */}
+        {!hasSearched && (
+          <div className="bg-accent/[0.03] border border-accent/15 rounded-xl p-4 text-left space-y-3 animate-in fade-in duration-300">
+            <div className="space-y-1">
+              <h4 className="text-[12px] font-bold text-foreground tracking-tight">How Briefd Works</h4>
+              <p className="text-[11px] text-muted-foreground leading-relaxed font-body">
+                Briefd is a multi-agent competitive analysis platform. Instead of generic search queries, it deploys a team of 4 specialized AI agents that scrape the web, identify key competitors, extract SWOT matrices, and compile structured reports.
+              </p>
+            </div>
+
+            <div className="border-t border-border/80 pt-3">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">⚡ Try a live Demo (Instant & Free)</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  { name: 'Notion (Demo)', desc: 'Unified wikis, docs, and block editor databases' },
+                  { name: 'Stripe (Demo)', desc: 'Developer billing, payouts, and card commerce APIs' }
+                ].map((sample) => (
+                  <button
+                    key={sample.name}
+                    onClick={() => handleResearchSubmit(sample.name)}
+                    className="p-2.5 bg-background border border-border hover:border-accent/30 rounded-lg hover:shadow-sm transition-all duration-250 cursor-pointer text-left group/sample flex items-start gap-2.5"
+                  >
+                    <span className="mt-1.5 h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <div>
+                      <div className="font-semibold text-[11px] text-foreground group-hover/sample:text-accent transition-colors">
+                        {sample.name}
+                      </div>
+                      <p className="text-[9.5px] text-muted-foreground/80 leading-snug">{sample.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tool Header */}
+        <div className="text-left">
+          <h3 className="text-[13px] font-semibold text-foreground">
+            Competitive Research Multi-Agent Toolkit
+          </h3>
+          <p className="text-[11px] text-muted-foreground mt-1 leading-normal font-body">
+            Deploy a network of specialized agents to map market positioning and competitor landscapes in real-time.
+          </p>
         </div>
 
         {/* Active Workings Panel */}
@@ -532,50 +565,57 @@ export default function DashboardPage() {
               exit={{ opacity: 0, y: 10 }}
               className="border-t border-border/60 pt-5 text-left text-[11px]"
             >
-              <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-                Research Pipeline Loop
+              <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-5 flex items-center gap-1.5 select-none">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+                <span>Active Research Pipeline Flow</span>
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 relative">
                 {[
                   {
-                    step: '1',
+                    step: '01',
                     name: 'Company Researcher',
-                    desc: 'Scans search indices, archives news, and builds target profiles.'
+                    desc: 'Scans search indices, archives news, and builds target profiles.',
+                    icon: <Globe className="h-4 w-4 text-blue-500" />,
+                    bg: 'from-blue-500/[0.03] to-transparent border-blue-500/10'
                   },
                   {
-                    step: '2',
+                    step: '02',
                     name: 'Competitor Finder',
-                    desc: 'Identifies alternatives, extracts rivals, and maps threat cards.'
+                    desc: 'Identifies alternatives, extracts rivals, and maps threat cards.',
+                    icon: <Target className="h-4 w-4 text-rose-500" />,
+                    bg: 'from-rose-500/[0.03] to-transparent border-rose-500/10'
                   },
                   {
-                    step: '3',
+                    step: '03',
                     name: 'Positioning Analyst',
-                    desc: 'Maps feature capability grids and counts differentiator levels.'
+                    desc: 'Maps feature capability grids and counts differentiator levels.',
+                    icon: <BarChart2 className="h-4 w-4 text-amber-500" />,
+                    bg: 'from-amber-500/[0.03] to-transparent border-amber-500/10'
                   },
                   {
-                    step: '4',
+                    step: '04',
                     name: 'Briefing Writer',
-                    desc: 'Synthesizes all structured agent data into final markdown briefs.'
+                    desc: 'Synthesizes all structured agent data into final markdown briefs.',
+                    icon: <FileText className="h-4 w-4 text-emerald-500" />,
+                    bg: 'from-emerald-500/[0.03] to-transparent border-emerald-500/10'
                   }
                 ].map((agent, index) => (
-                  <div key={index} className="relative bg-secondary/35 border border-border/60 rounded-xl p-4 flex flex-col justify-between hover:border-slate-300 transition-all min-h-[110px]">
-                    {/* Connecting Chevron/Arrow for desktop */}
-                    {index < 3 && (
-                      <div className="hidden sm:block absolute top-1/2 -right-3 -translate-y-1/2 z-10 bg-background border border-border rounded-full p-1 text-muted-foreground">
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    )}
+                  <div key={index} className={`relative bg-gradient-to-b ${agent.bg} border rounded-xl p-4 flex flex-col justify-between hover:scale-[1.01] hover:shadow-sm transition-all duration-300 min-h-[120px] text-left overflow-hidden group/card`}>
                     
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[9.5px] font-bold text-accent bg-accent/10 px-2 py-0.5 rounded-full border border-accent/10">
-                          Agent {agent.step}
-                        </span>
+                    {/* Big background number */}
+                    <div className="absolute right-2 -bottom-2 text-[50px] font-bold text-foreground/[0.04] select-none pointer-events-none group-hover/card:text-foreground/[0.08] transition-colors font-display">
+                      {agent.step}
+                    </div>
+
+
+                    <div className="space-y-2.5 relative z-10">
+                      <div className="h-8 w-8 bg-white border border-neutral-100 rounded-lg flex items-center justify-center shadow-sm">
+                        {agent.icon}
                       </div>
-                      <h5 className="text-[11.5px] font-bold text-foreground leading-tight">{agent.name}</h5>
-                      <p className="mt-1.5 text-[11.5px] text-muted-foreground/95 leading-relaxed">{agent.desc}</p>
+                      <div>
+                        <h5 className="text-[12px] font-bold text-foreground tracking-tight">{agent.name}</h5>
+                        <p className="mt-1 text-[11px] text-muted-foreground/90 leading-relaxed font-body">{agent.desc}</p>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -584,72 +624,6 @@ export default function DashboardPage() {
           )}
         </AnimatePresence>
       </div>
-
-      {/* Placeholder dashboard content when no active scan is open */}
-      {!hasSearched && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 text-left">
-          {/* Quick Scans / Popular Targets */}
-          <div className="md:col-span-2 bg-background rounded-lg border border-border p-5 shadow-sm space-y-4">
-            <div>
-              <h4 className="text-[12px] font-semibold text-foreground flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-accent" />
-                <span>Suggested Research Targets</span>
-              </h4>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Click any popular tech firm to launch a sequential multi-agent scan instantly.</p>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {[
-                { name: 'Stripe', industry: 'Fintech / Payments' },
-                { name: 'Figma', industry: 'Design Tools' },
-                { name: 'Notion', industry: 'Collaborative Workspace' },
-                { name: 'Supabase', industry: 'Database / Backend' },
-                { name: 'Vercel', industry: 'Frontend Deployment' },
-                { name: 'OpenAI', industry: 'AI Foundation Models' }
-              ].map((company, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleResearchSubmit(company.name)}
-                  className="flex flex-col items-start p-3 bg-secondary/35 border border-border/80 hover:border-slate-350 hover:bg-secondary/60 rounded-xl transition-all cursor-pointer text-left w-full"
-                >
-                  <span className="text-[11.5px] font-bold text-foreground">{company.name}</span>
-                  <span className="text-[10.5px] text-muted-foreground/90 mt-0.5">{company.industry}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Quick Stats Summary */}
-          <div className="bg-background rounded-lg border border-border p-5 shadow-sm space-y-4 flex flex-col justify-between">
-            <div>
-              <h4 className="text-[12px] font-semibold text-foreground">Workspace Metrics</h4>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Overview of scan logs and resource allocations.</p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center text-[11px] py-1 border-b border-border/40">
-                <span className="text-muted-foreground">Scanned Companies</span>
-                <span className="font-semibold text-foreground">{(briefingsHistory || []).length}</span>
-              </div>
-              <div className="flex justify-between items-center text-[11px] py-1 border-b border-border/40">
-                <span className="text-muted-foreground">Competitors Profiled</span>
-                <span className="font-semibold text-foreground">{(briefingsHistory || []).length * 3}</span>
-              </div>
-              <div className="flex justify-between items-center text-[11px] py-1">
-                <span className="text-muted-foreground">Active Billing Tier</span>
-                <span className="font-semibold text-accent capitalize">{user.tier}</span>
-              </div>
-            </div>
-
-            <div className="text-[10.5px] bg-secondary/50 border border-border/60 p-2.5 rounded text-muted-foreground/95 leading-normal">
-              {user.tier === 'pro' 
-                ? 'Professional plan activated. Priority agent streams and unrestricted PDF/Competitor matrices are ready.'
-                : 'Upgrade to Professional in settings to unlock unlimited research limits, deep competitor tables, and PDF reports.'
-              }
-            </div>
-          </div>
-        </div>
-      )}
     </DashboardLayout>
   );
 }
